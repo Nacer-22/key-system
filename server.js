@@ -7,6 +7,7 @@ const db = new Database('keys.db');
 app.use(express.json());
 app.use(express.static('.')); 
 
+// --- إعداد قاعدة البيانات ---
 db.exec(`
 CREATE TABLE IF NOT EXISTS codes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS activations (
 );
 `);
 
+// الرمز السري للوحة التحكم
 const ADMIN_TOKEN = "Nacer_Nacer_22"; 
 
 function adminAuth(req, res, next) {
@@ -36,11 +38,13 @@ function adminAuth(req, res, next) {
     next();
 }
 
-function generateCode(prefix = "VIP") {
+// توليد الكود بالبادئة الجديدة Nacer
+function generateCode(prefix = "Nacer") {
     const part = () => crypto.randomBytes(2).toString('hex').toUpperCase();
     return `${prefix}-${part()}-${part()}-${part()}`;
 }
 
+// ========== API للعميل (التطبيق) ==========
 app.post('/api/verify', (req, res) => {
     const { code, device_id } = req.body;
     if (!code || !device_id) return res.json({ valid: false, reason: "missing_params" });
@@ -69,6 +73,7 @@ app.post('/api/verify', (req, res) => {
     res.json({ valid: true, expires_at: expiresAt });
 });
 
+// ========== API للوحة التحكم ==========
 app.post('/api/admin/codes', adminAuth, (req, res) => {
     const { duration_hours, max_devices = 1, count = 1, note = "" } = req.body;
     const codes = [];
