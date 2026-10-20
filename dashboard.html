@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control panel Nacer_22</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+body { font-family: 'Cairo', sans-serif; background: #050505; color: #fff; display: flex; justify-content: center; padding: 20px; margin: 0; }
+.container { width: 100%; max-width: 600px; background: #111; padding: 20px; border-radius: 10px; border: 1px solid #e50914; text-align: center; }
+img { width: 120px; height: 120px; border-radius: 50%; border: 3px solid #e50914; }
+h1 { color: #e50914; font-size: 22px; margin: 10px 0 20px 0; }
+input, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; border: none; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+input { background: #222; color: #fff; border: 1px solid #444; }
+button { background: #e50914; color: #fff; font-weight: bold; cursor: pointer; }
+button:hover { background: #ff1a25; }
+.card { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-right: 3px solid #e50914; }
+.row { display: flex; gap: 10px; }
+table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+th, td { padding: 8px; border-bottom: 1px solid #333; }
+th { color: #e50914; }
+#status { color: #22c55e; font-weight: bold; display: none; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <img src="https://files.catbox.moe/lbr98b.png" alt="Logo">
+    <h1>Control panel Nacer_22</h1>
+
+    <div class="card">
+        <input type="password" id="token" placeholder="أدخل الرمز السري (Admin Token)">
+        <button onclick="loadCodes()">تحميل الأكواد</button>
+    </div>
+
+    <div class="card">
+        <div class="row">
+            <input type="number" id="dur" value="24" placeholder="المدة">
+            <input type="number" id="dev" value="1" placeholder="الأجهزة">
+            <input type="number" id="cnt" value="1" placeholder="العدد">
+        </div>
+        <button onclick="createCode()">إنشاء الأكواد</button>
+    </div>
+
+    <div id="status"></div>
+
+    <table>
+        <thead>
+            <tr><th>ID</th><th>الكود</th><th>المدة</th><th>الحالة</th><th>حذف</th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+    </table>
+</div>
+
+<script>
+const API = "https://key-system-yn0o.onrender.com"; 
+const tk = () => document.getElementById('token').value;
+const st = document.getElementById('status');
+
+function showStatus(msg) { st.innerText = msg; st.style.display = 'block'; setTimeout(() => st.style.display = 'none', 3000); }
+
+async function createCode() {
+    const body = { duration_hours: +document.getElementById('dur').value, max_devices: +document.getElementById('dev').value, count: +document.getElementById('cnt').value };
+    const r = await fetch(API + '/api/admin/codes', { method: 'POST', headers: {'Content-Type': 'application/json', 'x-admin-token': tk()}, body: JSON.stringify(body) });
+    if(r.status === 403) return showStatus("الرمز السري خاطئ!");
+    showStatus("تم الإنشاء بنجاح!"); loadCodes();
+}
+
+async function loadCodes() {
+    const r = await fetch(API + '/api/admin/codes', { headers: {'x-admin-token': tk()} });
+    if(r.status === 403) return showStatus("الرمز السري خاطئ!");
+    const rows = await r.json();
+    document.getElementById('tbody').innerHTML = rows.map(c => `
+        <tr>
+            <td>${c.id}</td><td style="color:#ffcc00">${c.code}</td><td>${c.duration_hours}</td>
+            <td style="color:${c.is_active ? '#22c55e' : '#e50914'}">${c.is_active ? 'مفعل' : 'معطل'}</td>
+            <td><button onclick="del(${c.id})" style="padding:2px 5px; font-size:10px; width:auto; background:#333;">حذف</button></td>
+        </tr>
+    `).join('');
+}
+
+async function del(id) {
+    await fetch(API + '/api/admin/codes/' + id, { method: 'DELETE', headers: {'x-admin-token': tk()} });
+    loadCodes();
+}
+</script>
+</body>
+</html>
