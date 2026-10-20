@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم الأكواد - VIP</title>
+    <title>لوحة تحكم الأكواد - HAX NON ROOT</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
 
         :root {
-            --bg-color: #0a0a0a;
-            --panel-bg: #151515;
+            --bg-color: #050505;
+            --panel-bg: #121212;
             --red-color: #e50914;
             --red-hover: #ff1a25;
             --text-color: #ffffff;
@@ -21,189 +21,232 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             justify-content: center;
+            background-image: radial-gradient(circle at top, #1a0505 0%, #050505 60%);
         }
 
         .container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 800px;
             background-color: var(--panel-bg);
             border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 0 20px rgba(229, 9, 20, 0.2);
-            border: 1px solid #333;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(229, 9, 20, 0.15);
+            border: 1px solid #2a2a2a;
+        }
+
+        /* تنسيق صورة الغلاف */
+        .banner-container {
+            width: 100%;
+            height: 220px;
+            background-color: #000;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px solid #330000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+        }
+
+        .banner-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* لملء الإطار */
+            object-position: center;
         }
 
         h1 {
             text-align: center;
             color: var(--red-color);
-            margin-bottom: 30px;
-            font-size: 28px;
-            text-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+            margin-bottom: 25px;
+            font-size: 26px;
+            text-shadow: 0 0 15px rgba(229, 9, 20, 0.6);
+            letter-spacing: 1px;
         }
 
-        .top-bar {
+        .card {
+            background-color: #181818;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-right: 4px solid var(--red-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .input-group {
             display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            justify-content: center;
             flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
         }
 
-        input[type="password"], input[type="number"] {
+        .input-group label {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        input {
             background-color: #222;
             border: 1px solid #444;
             color: white;
-            padding: 10px 15px;
+            padding: 12px;
             border-radius: 8px;
             font-family: 'Cairo', sans-serif;
             outline: none;
             transition: 0.3s;
+            flex: 1;
+            min-width: 80px;
         }
 
-        input[type="password"]:focus, input[type="number"]:focus {
+        input:focus {
             border-color: var(--red-color);
-            box-shadow: 0 0 8px rgba(229, 9, 20, 0.5);
+            box-shadow: 0 0 10px rgba(229, 9, 20, 0.4);
         }
-
-        input[type="password"] { width: 250px; }
-        input[type="number"] { width: 80px; }
 
         button {
-            background-color: var(--red-color);
+            background: linear-gradient(135deg, var(--red-color), #900000);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border-radius: 8px;
             cursor: pointer;
             font-family: 'Cairo', sans-serif;
             font-weight: bold;
+            font-size: 16px;
             transition: 0.3s;
-            box-shadow: 0 4px 10px rgba(229, 9, 20, 0.3);
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+            width: 100%;
         }
 
         button:hover {
-            background-color: var(--red-hover);
+            background: linear-gradient(135deg, var(--red-hover), #b30000);
             transform: translateY(-2px);
         }
 
-        button.danger { background-color: #555; }
-        button.danger:hover { background-color: #777; }
-        
         button.action-btn {
-            padding: 5px 10px;
+            padding: 6px 12px;
             font-size: 12px;
-            margin: 0 2px;
+            margin: 2px;
+            width: auto;
+            background: #333;
+            box-shadow: none;
         }
-
-        .create-section {
-            background-color: #1a1a1a;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            border-right: 4px solid var(--red-color);
-        }
-
-        .create-section label { color: var(--text-muted); }
+        
+        button.action-btn:hover { background: #555; }
+        button.action-btn.delete { background: #e50914; }
+        button.action-btn.delete:hover { background: #ff1a25; }
 
         #status {
             text-align: center;
             margin-bottom: 20px;
             font-weight: bold;
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             display: none;
         }
-        .status-success { background-color: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; }
-        .status-error { background-color: rgba(229, 9, 20, 0.2); color: var(--red-color); border: 1px solid var(--red-color); }
+        .status-success { background-color: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid #22c55e; }
+        .status-error { background-color: rgba(229, 9, 20, 0.15); color: var(--red-color); border: 1px solid var(--red-color); }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #222;
+        }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
             background-color: #111;
-            border-radius: 10px;
-            overflow: hidden;
         }
 
         th, td {
-            padding: 15px;
+            padding: 12px 8px;
             text-align: center;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #222;
+            font-size: 14px;
         }
 
-        th {
-            background-color: #1f1f1f;
-            color: var(--red-color);
-            font-weight: bold;
-        }
-
-        tr:hover { background-color: #1a1a1a; }
+        th { background-color: #1a1a1a; color: var(--red-color); }
+        tr:hover { background-color: #1f1f1f; }
 
         .active { color: #22c55e; font-weight: bold; }
         .inactive { color: var(--red-color); font-weight: bold; }
         
-        .code-text {
-            font-family: monospace;
-            font-size: 16px;
-            background: #000;
-            padding: 5px 10px;
-            border-radius: 5px;
+        .code-text { 
+            font-family: monospace; 
+            font-size: 15px; 
+            background: #000; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
             border: 1px solid #333;
-            letter-spacing: 1px;
+            color: #ffcc00;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- صورة الغلاف -->
+    <div class="banner-container">
+        <img src="banner.jpg" alt="HAX NON ROOT">
+    </div>
+
     <h1>🔑 لوحة تحكم الأكواد</h1>
     
-    <div class="top-bar">
-        <!-- تم إضافة type="password" لإخفاء الرمز -->
-        <input type="password" id="token" placeholder="أدخل الرمز السري (Admin Token)">
+    <!-- كرت الرمز السري -->
+    <div class="card">
+        <div class="input-group">
+            <input type="password" id="token" placeholder="أدخل الرمز السري (Admin Token)">
+        </div>
         <button onclick="loadCodes()">تحميل الأكواد</button>
     </div>
 
-    <div class="create-section">
-        <label>المدة (ساعات، 0=دائم):</label>
-        <input type="number" id="dur" value="24">
-        <label>الأجهزة:</label>
-        <input type="number" id="dev" value="1">
-        <label>العدد:</label>
-        <input type="number" id="cnt" value="1">
-        <button onclick="createCode()">إنشاء الأكواد</button>
+    <!-- كرت إنشاء الأكواد -->
+    <div class="card">
+        <h3 style="text-align:center; margin-top:0; color:var(--text-muted); font-size:16px;">إنشاء أكواد جديدة</h3>
+        <div class="input-group">
+            <label>المدة (ساعة):</label>
+            <input type="number" id="dur" value="24">
+            
+            <label>الأجهزة:</label>
+            <input type="number" id="dev" value="1">
+            
+            <label>العدد:</label>
+            <input type="number" id="cnt" value="1">
+        </div>
+        <button onclick="createCode()">إنشاء الأكواد الآن</button>
     </div>
 
     <div id="status"></div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>الكود</th>
-                <th>المدة</th>
-                <th>الأجهزة</th>
-                <th>مستخدم</th>
-                <th>الحالة</th>
-                <th>إجراء</th>
-            </tr>
-        </thead>
-        <tbody id="tbody">
-            <tr><td colspan="7" style="color:#777;">قم بإدخال الرمز السري واضغط "تحميل الأكواد" لعرض القائمة</td></tr>
-        </tbody>
-    </table>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>الكود</th>
+                    <th>المدة</th>
+                    <th>الأجهزة</th>
+                    <th>الحالة</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                <tr><td colspan="6" style="color:#777;">قم بإدخال الرمز السري واضغط "تحميل" لعرض القائمة</td></tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-// ضع رابط السيرفر الخاص بك هنا (تأكد من وجود https)
+// ضع رابط السيرفر الخاص بك هنا
 const API = "https://key-system-yn0o.onrender.com"; 
 const tk = () => document.getElementById('token').value;
 const st = document.getElementById('status');
@@ -217,8 +260,8 @@ function showStatus(message, isSuccess) {
 
 async function createCode() {
     if(!tk()) return showStatus("الرجاء إدخال الرمز السري أولاً!", false);
-    
     showStatus("جاري الإنشاء...", true);
+    
     const body = { 
         duration_hours: +document.getElementById('dur').value, 
         max_devices: +document.getElementById('dev').value, 
@@ -248,18 +291,17 @@ async function createCode() {
 
 async function loadCodes() {
     if(!tk()) return showStatus("الرجاء إدخال الرمز السري أولاً!", false);
-    
     showStatus("جاري التحميل...", true);
+    
     try {
         const r = await fetch(API + '/api/admin/codes', {headers: {'x-admin-token': tk()}});
-        
         if(r.status === 403) return showStatus("الرمز السري خاطئ!", false);
         
         const rows = await r.json();
         st.style.display = 'none';
         
         if (rows.length === 0) {
-            document.getElementById('tbody').innerHTML = '<tr><td colspan="7">لا توجد أكواد بعد.</td></tr>';
+            document.getElementById('tbody').innerHTML = '<tr><td colspan="6">لا توجد أكواد بعد.</td></tr>';
             return;
         }
         
@@ -267,14 +309,12 @@ async function loadCodes() {
             <tr>
                 <td>${c.id}</td>
                 <td><span class="code-text">${c.code}</span></td>
-                <td>${c.duration_hours === 0 ? 'دائم' : c.duration_hours + ' ساعة'}</td>
-                <td>${c.max_devices}</td>
+                <td>${c.duration_hours === 0 ? 'دائم' : c.duration_hours + ' س'}</td>
                 <td>${c.used}/${c.max_devices}</td>
                 <td class="${c.is_active ? 'active' : 'inactive'}">${c.is_active ? 'مفعل' : 'معطل'}</td>
                 <td>
                     <button class="action-btn" onclick="copyText('${c.code}')">نسخ</button>
-                    <button class="action-btn danger" onclick="toggle(${c.id},${c.is_active ? 0 : 1})">${c.is_active ? 'تعطيل' : 'تفعيل'}</button>
-                    <button class="action-btn danger" onclick="del(${c.id})">حذف</button>
+                    <button class="action-btn delete" onclick="del(${c.id})">حذف</button>
                 </td>
             </tr>
         `).join('');
@@ -283,19 +323,9 @@ async function loadCodes() {
     }
 }
 
-// دالة نسخ الكود
 function copyText(text) {
     navigator.clipboard.writeText(text);
     showStatus("تم نسخ الكود: " + text, true);
-}
-
-async function toggle(id, active) { 
-    await fetch(API + '/api/admin/codes/' + id, {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json', 'x-admin-token': tk()},
-        body: JSON.stringify({is_active: active})
-    }); 
-    loadCodes(); 
 }
 
 async function del(id) { 
