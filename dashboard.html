@@ -59,7 +59,7 @@
 
         .profile-name {
             margin-top: 15px;
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 900;
             color: var(--red-color);
             text-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
@@ -195,8 +195,7 @@
     
     <!-- الصورة الدائرية والاسم -->
     <div class="profile-container">
-        <!-- ملاحظة: الرابط هنا هو رابط الصورة التي أرسلتها، يمكنك تغييره لاحقاً -->
-        <img src="https://i.ibb.co/68028Zc/skull.jpg" alt="Profile" class="profile-img">
+        <img src="https://files.catbox.moe/lbr98b.png" alt="Profile" class="profile-img">
         <div class="profile-name">Control panel Nacer_22</div>
     </div>
 
@@ -315,6 +314,31 @@ async function loadCodes() {
                 <td>
                     <button class="action-btn" onclick="copyText('${c.code}')">نسخ</button>
                     <button class="action-btn delete" onclick="del(${c.id})">حذف</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch(e) {
+        showStatus("خطأ في الاتصال.", false);
+    }
+}
+
+function copyText(text) {
+    navigator.clipboard.writeText(text);
+    showStatus("تم نسخ الكود: " + text, true);
+}
+
+async function del(id) { 
+    if(confirm('هل أنت متأكد من حذف هذا الكود؟')) { 
+        await fetch(API + '/api/admin/codes/' + id, {
+            method: 'DELETE',
+            headers: {'x-admin-token': tk()}
+        }); 
+        loadCodes(); 
+    } 
+}
+</script>
+</body>
+</html>tton>
                 </td>
             </tr>
         `).join('');
