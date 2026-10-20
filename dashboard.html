@@ -39,7 +39,6 @@
             margin-top: 20px;
         }
 
-        /* تصميم الصورة الدائرية */
         .profile-container {
             display: flex;
             flex-direction: column;
@@ -192,14 +191,11 @@
 <body>
 
 <div class="container">
-    
-    <!-- الصورة الدائرية والاسم -->
     <div class="profile-container">
         <img src="https://files.catbox.moe/lbr98b.png" alt="Profile" class="profile-img">
         <div class="profile-name">Control panel Nacer_22</div>
     </div>
 
-    <!-- كرت الرمز السري -->
     <div class="card">
         <div class="input-group">
             <input type="password" id="token" placeholder="أدخل الرمز السري (Admin Token)">
@@ -207,16 +203,13 @@
         <button onclick="loadCodes()">تحميل الأكواد</button>
     </div>
 
-    <!-- كرت إنشاء الأكواد -->
     <div class="card">
         <h3 style="text-align:center; margin-top:0; color:var(--text-muted); font-size:16px;">إنشاء أكواد جديدة</h3>
         <div class="input-group">
             <label>المدة (ساعة):</label>
             <input type="number" id="dur" value="24">
-            
             <label>الأجهزة:</label>
             <input type="number" id="dev" value="1">
-            
             <label>العدد:</label>
             <input type="number" id="cnt" value="1">
         </div>
@@ -245,7 +238,6 @@
 </div>
 
 <script>
-// ضع رابط السيرفر الخاص بك هنا
 const API = "https://key-system-yn0o.onrender.com"; 
 const tk = () => document.getElementById('token').value;
 const st = document.getElementById('status');
@@ -260,22 +252,18 @@ function showStatus(message, isSuccess) {
 async function createCode() {
     if(!tk()) return showStatus("الرجاء إدخال الرمز السري أولاً!", false);
     showStatus("جاري الإنشاء...", true);
-    
     const body = { 
         duration_hours: +document.getElementById('dur').value, 
         max_devices: +document.getElementById('dev').value, 
         count: +document.getElementById('cnt').value 
     };
-    
     try {
         const r = await fetch(API + '/api/admin/codes', {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'x-admin-token': tk()},
             body: JSON.stringify(body)
         });
-        
         if(r.status === 403) return showStatus("الرمز السري خاطئ!", false);
-        
         const d = await r.json();
         if(d.created) {
             showStatus(`تم إنشاء ${d.created.length} كود بنجاح!`, true);
@@ -291,19 +279,15 @@ async function createCode() {
 async function loadCodes() {
     if(!tk()) return showStatus("الرجاء إدخال الرمز السري أولاً!", false);
     showStatus("جاري التحميل...", true);
-    
     try {
         const r = await fetch(API + '/api/admin/codes', {headers: {'x-admin-token': tk()}});
         if(r.status === 403) return showStatus("الرمز السري خاطئ!", false);
-        
         const rows = await r.json();
         st.style.display = 'none';
-        
         if (rows.length === 0) {
             document.getElementById('tbody').innerHTML = '<tr><td colspan="6">لا توجد أكواد بعد.</td></tr>';
             return;
         }
-        
         document.getElementById('tbody').innerHTML = rows.map(c => `
             <tr>
                 <td>${c.id}</td>
@@ -319,6 +303,26 @@ async function loadCodes() {
         `).join('');
     } catch(e) {
         showStatus("خطأ في الاتصال.", false);
+    }
+}
+
+function copyText(text) {
+    navigator.clipboard.writeText(text);
+    showStatus("تم نسخ الكود: " + text, true);
+}
+
+async function del(id) { 
+    if(confirm('هل أنت متأكد من حذف هذا الكود؟')) { 
+        await fetch(API + '/api/admin/codes/' + id, {
+            method: 'DELETE',
+            headers: {'x-admin-token': tk()}
+        }); 
+        loadCodes(); 
+    } 
+}
+</script>
+</body>
+</html>        showStatus("خطأ في الاتصال.", false);
     }
 }
 
