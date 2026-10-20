@@ -1,91 +1,312 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-<meta charset="UTF-8"><title>لوحة تحكم الأكواد</title>
-<style>
-  body { font-family: sans-serif; background:#111; color:#eee; padding:20px; }
-  input,button,select { padding:8px; margin:4px; border-radius:6px; border:none; }
-  button { background:#2563eb; color:#fff; cursor:pointer; } button.danger{ background:#dc2626; }
-  table { width:100%; border-collapse:collapse; margin-top:20px; }
-  th,td { padding:8px; border-bottom:1px solid #333; text-align:center; }
-  .active{color:#22c55e}.inactive{color:#ef4444}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الأكواد - VIP</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #0a0a0a;
+            --panel-bg: #151515;
+            --red-color: #e50914;
+            --red-hover: #ff1a25;
+            --text-color: #ffffff;
+            --text-muted: #aaaaaa;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background-color: var(--panel-bg);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(229, 9, 20, 0.2);
+            border: 1px solid #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--red-color);
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+        }
+
+        .top-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        input[type="password"], input[type="number"] {
+            background-color: #222;
+            border: 1px solid #444;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input[type="password"]:focus, input[type="number"]:focus {
+            border-color: var(--red-color);
+            box-shadow: 0 0 8px rgba(229, 9, 20, 0.5);
+        }
+
+        input[type="password"] { width: 250px; }
+        input[type="number"] { width: 80px; }
+
+        button {
+            background-color: var(--red-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-weight: bold;
+            transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(229, 9, 20, 0.3);
+        }
+
+        button:hover {
+            background-color: var(--red-hover);
+            transform: translateY(-2px);
+        }
+
+        button.danger { background-color: #555; }
+        button.danger:hover { background-color: #777; }
+        
+        button.action-btn {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 0 2px;
+        }
+
+        .create-section {
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            border-right: 4px solid var(--red-color);
+        }
+
+        .create-section label { color: var(--text-muted); }
+
+        #status {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+        .status-success { background-color: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; }
+        .status-error { background-color: rgba(229, 9, 20, 0.2); color: var(--red-color); border: 1px solid var(--red-color); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #111;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+
+        th {
+            background-color: #1f1f1f;
+            color: var(--red-color);
+            font-weight: bold;
+        }
+
+        tr:hover { background-color: #1a1a1a; }
+
+        .active { color: #22c55e; font-weight: bold; }
+        .inactive { color: var(--red-color); font-weight: bold; }
+        
+        .code-text {
+            font-family: monospace;
+            font-size: 16px;
+            background: #000;
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #333;
+            letter-spacing: 1px;
+        }
+    </style>
 </head>
 <body>
-<h2>🔑 لوحة الأكواد</h2>
-<input id="token" placeholder="أدخل الرمز السري (Nacer_Nacer_22)" style="width:250px">
-<button onclick="loadCodes()">تحميل الأكواد</button>
-<hr>
-<h3>إنشاء أكواد</h3>
-<label>المدة (ساعات، 0=دائم):</label><input id="dur" type="number" value="24" style="width:80px">
-<label>الأجهزة:</label><input id="dev" type="number" value="1" style="width:60px">
-<label>العدد:</label><input id="cnt" type="number" value="1" style="width:60px">
-<button onclick="createCode()">إنشاء الأكواد</button>
 
-<!-- رسالة الحالة تظهر هنا بدلاً من النوافذ المزعجة -->
-<div id="status" style="margin-top:15px; color:#fbbf24; font-weight:bold;"></div>
+<div class="container">
+    <h1>🔑 لوحة تحكم الأكواد</h1>
+    
+    <div class="top-bar">
+        <!-- تم إضافة type="password" لإخفاء الرمز -->
+        <input type="password" id="token" placeholder="أدخل الرمز السري (Admin Token)">
+        <button onclick="loadCodes()">تحميل الأكواد</button>
+    </div>
 
-<table><thead><tr><th>ID</th><th>الكود</th><th>المدة</th><th>الأجهزة</th><th>مستخدم</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="tbody"></tbody></table>
+    <div class="create-section">
+        <label>المدة (ساعات، 0=دائم):</label>
+        <input type="number" id="dur" value="24">
+        <label>الأجهزة:</label>
+        <input type="number" id="dev" value="1">
+        <label>العدد:</label>
+        <input type="number" id="cnt" value="1">
+        <button onclick="createCode()">إنشاء الأكواد</button>
+    </div>
+
+    <div id="status"></div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>الكود</th>
+                <th>المدة</th>
+                <th>الأجهزة</th>
+                <th>مستخدم</th>
+                <th>الحالة</th>
+                <th>إجراء</th>
+            </tr>
+        </thead>
+        <tbody id="tbody">
+            <tr><td colspan="7" style="color:#777;">قم بإدخال الرمز السري واضغط "تحميل الأكواد" لعرض القائمة</td></tr>
+        </tbody>
+    </table>
+</div>
 
 <script>
+// ضع رابط السيرفر الخاص بك هنا (تأكد من وجود https)
 const API = "https://key-system-yn0o.onrender.com"; 
 const tk = () => document.getElementById('token').value;
 const st = document.getElementById('status');
 
+function showStatus(message, isSuccess) {
+    st.innerText = message;
+    st.style.display = 'block';
+    st.className = isSuccess ? 'status-success' : 'status-error';
+    setTimeout(() => { st.style.display = 'none'; }, 5000);
+}
+
 async function createCode() {
-  st.innerText = "جاري الإنشاء...";
-  const body = { duration_hours: +document.getElementById('dur').value, max_devices: +document.getElementById('dev').value, count: +document.getElementById('cnt').value };
-  try {
-    const r = await fetch(API+'/api/admin/codes',{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':tk()},body:JSON.stringify(body)});
-    if(r.status === 403) { st.style.color = 'red'; st.innerText = "الرمز السري خاطئ!"; return; }
-    const d = await r.json();
-    if(d.created) {
-        st.style.color = '#22c55e';
-        st.innerText = "تم إنشاء الكود بنجاح!";
-        loadCodes();
-    } else {
-        st.style.color = 'red';
-        st.innerText = "خطأ: " + JSON.stringify(d);
+    if(!tk()) return showStatus("الرجاء إدخال الرمز السري أولاً!", false);
+    
+    showStatus("جاري الإنشاء...", true);
+    const body = { 
+        duration_hours: +document.getElementById('dur').value, 
+        max_devices: +document.getElementById('dev').value, 
+        count: +document.getElementById('cnt').value 
+    };
+    
+    try {
+        const r = await fetch(API + '/api/admin/codes', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'x-admin-token': tk()},
+            body: JSON.stringify(body)
+        });
+        
+        if(r.status === 403) return showStatus("الرمز السري خاطئ!", false);
+        
+        const d = await r.json();
+        if(d.created) {
+            showStatus(`تم إنشاء ${d.created.length} كود بنجاح!`, true);
+            loadCodes();
+        } else {
+            showStatus("خطأ: " + JSON.stringify(d), false);
+        }
+    } catch(e) {
+        showStatus("خطأ في الاتصال بالسيرفر.", false);
     }
-  } catch(e) {
-    st.style.color = 'red';
-    st.innerText = "خطأ في الاتصال بالسيرفر. قد يكون في وضع السكون، انتظر قليلاً وحاول مجدداً.";
-  }
 }
 
 async function loadCodes() {
-  st.innerText = "جاري التحميل...";
-  try {
-    const r = await fetch(API+'/api/admin/codes',{headers:{'x-admin-token':tk()}});
-    if(r.status === 403) { st.style.color = 'red'; st.innerText = "الرمز السري خاطئ!"; return; }
-    const rows = await r.json();
-    st.innerText = "";
-    if (rows.length === 0) {
-        document.getElementById('tbody').innerHTML = '<tr><td colspan="7">لا توجد أكواد بعد.</td></tr>';
-        return;
+    if(!tk()) return showStatus("الرجاء إدخال الرمز السري أولاً!", false);
+    
+    showStatus("جاري التحميل...", true);
+    try {
+        const r = await fetch(API + '/api/admin/codes', {headers: {'x-admin-token': tk()}});
+        
+        if(r.status === 403) return showStatus("الرمز السري خاطئ!", false);
+        
+        const rows = await r.json();
+        st.style.display = 'none';
+        
+        if (rows.length === 0) {
+            document.getElementById('tbody').innerHTML = '<tr><td colspan="7">لا توجد أكواد بعد.</td></tr>';
+            return;
+        }
+        
+        document.getElementById('tbody').innerHTML = rows.map(c => `
+            <tr>
+                <td>${c.id}</td>
+                <td><span class="code-text">${c.code}</span></td>
+                <td>${c.duration_hours === 0 ? 'دائم' : c.duration_hours + ' ساعة'}</td>
+                <td>${c.max_devices}</td>
+                <td>${c.used}/${c.max_devices}</td>
+                <td class="${c.is_active ? 'active' : 'inactive'}">${c.is_active ? 'مفعل' : 'معطل'}</td>
+                <td>
+                    <button class="action-btn" onclick="copyText('${c.code}')">نسخ</button>
+                    <button class="action-btn danger" onclick="toggle(${c.id},${c.is_active ? 0 : 1})">${c.is_active ? 'تعطيل' : 'تفعيل'}</button>
+                    <button class="action-btn danger" onclick="del(${c.id})">حذف</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch(e) {
+        showStatus("خطأ في الاتصال.", false);
     }
-    document.getElementById('tbody').innerHTML = rows.map(c=>`
-      <tr><td>${c.id}</td><td><code>${c.code}</code></td><td>${c.duration_hours===0?'دائم':c.duration_hours+' س'}</td>
-      <td>${c.max_devices}</td><td>${c.used}/${c.max_devices}</td>
-      <td class="${c.is_active?'active':'inactive'}">${c.is_active?'مفعل':'معطل'}</td>
-      <td><button onclick="toggle(${c.id},${c.is_active?0:1})">${c.is_active?'تعطيل':'تفعيل'}</button>
-      <button class="danger" onclick="del(${c.id})">حذف</button></td></tr>`).join('');
-  } catch(e) {
-    st.style.color = 'red';
-    st.innerText = "خطأ في الاتصال.";
-  }
 }
 
-async function toggle(id,active){ 
-    await fetch(API+'/api/admin/codes/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-token':tk()},body:JSON.stringify({is_active:active})}); 
+// دالة نسخ الكود
+function copyText(text) {
+    navigator.clipboard.writeText(text);
+    showStatus("تم نسخ الكود: " + text, true);
+}
+
+async function toggle(id, active) { 
+    await fetch(API + '/api/admin/codes/' + id, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json', 'x-admin-token': tk()},
+        body: JSON.stringify({is_active: active})
+    }); 
     loadCodes(); 
 }
 
-async function del(id){ 
-    if(confirm('هل أنت متأكد من حذف هذا الكود؟')){ 
-        await fetch(API+'/api/admin/codes/'+id,{method:'DELETE',headers:{'x-admin-token':tk()}}); 
+async function del(id) { 
+    if(confirm('هل أنت متأكد من حذف هذا الكود؟')) { 
+        await fetch(API + '/api/admin/codes/' + id, {
+            method: 'DELETE',
+            headers: {'x-admin-token': tk()}
+        }); 
         loadCodes(); 
     } 
 }
 </script>
-</body></html>
+</body>
+</html>
