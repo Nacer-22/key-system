@@ -1,9 +1,11 @@
 const express = require('express');
 const Database = require('better-sqlite3');
 const crypto = require('crypto');
+const cors = require('cors'); // تمت إضافة هذه المكتبة
 const app = express();
 const db = new Database('keys.db');
 
+app.use(cors()); // تم تفعيل السماح بالاتصال من المتصفحات
 app.use(express.json());
 app.use(express.static('.')); 
 
@@ -38,7 +40,7 @@ function adminAuth(req, res, next) {
     next();
 }
 
-// توليد الكود بالبادئة الجديدة Nacer
+// توليد الكود بالبادئة Nacer
 function generateCode(prefix = "Nacer") {
     const part = () => crypto.randomBytes(2).toString('hex').toUpperCase();
     return `${prefix}-${part()}-${part()}-${part()}`;
