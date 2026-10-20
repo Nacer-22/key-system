@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم الأكواد - HAX NON ROOT</title>
+    <title>Control Panel - Nacer_22</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
 
         :root {
             --bg-color: #050505;
@@ -25,6 +25,7 @@
             display: flex;
             justify-content: center;
             background-image: radial-gradient(circle at top, #1a0505 0%, #050505 60%);
+            min-height: 100vh;
         }
 
         .container {
@@ -32,40 +33,38 @@
             max-width: 800px;
             background-color: var(--panel-bg);
             border-radius: 15px;
-            padding: 20px;
+            padding: 30px 20px;
             box-shadow: 0 0 30px rgba(229, 9, 20, 0.15);
             border: 1px solid #2a2a2a;
+            margin-top: 20px;
         }
 
-        /* تنسيق صورة الغلاف */
-        .banner-container {
-            width: 100%;
-            height: 220px;
-            background-color: #000;
-            border-radius: 12px;
-            margin-bottom: 25px;
+        /* تصميم الصورة الدائرية */
+        .profile-container {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border: 2px solid #330000;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+            margin-bottom: 30px;
         }
 
-        .banner-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* لملء الإطار */
-            object-position: center;
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--red-color);
+            box-shadow: 0 0 20px rgba(229, 9, 20, 0.6);
+            background-color: #000;
         }
 
-        h1 {
-            text-align: center;
+        .profile-name {
+            margin-top: 15px;
+            font-size: 22px;
+            font-weight: 900;
             color: var(--red-color);
-            margin-bottom: 25px;
-            font-size: 26px;
-            text-shadow: 0 0 15px rgba(229, 9, 20, 0.6);
+            text-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
             letter-spacing: 1px;
+            text-align: center;
         }
 
         .card {
@@ -193,13 +192,14 @@
 <body>
 
 <div class="container">
-    <!-- صورة الغلاف -->
-    <div class="banner-container">
-        <img src="banner.jpg" alt="HAX NON ROOT">
+    
+    <!-- الصورة الدائرية والاسم -->
+    <div class="profile-container">
+        <!-- ملاحظة: الرابط هنا هو رابط الصورة التي أرسلتها، يمكنك تغييره لاحقاً -->
+        <img src="https://i.ibb.co/68028Zc/skull.jpg" alt="Profile" class="profile-img">
+        <div class="profile-name">Control panel Nacer_22</div>
     </div>
 
-    <h1>🔑 لوحة تحكم الأكواد</h1>
-    
     <!-- كرت الرمز السري -->
     <div class="card">
         <div class="input-group">
@@ -322,6 +322,24 @@ async function loadCodes() {
         showStatus("خطأ في الاتصال.", false);
     }
 }
+
+function copyText(text) {
+    navigator.clipboard.writeText(text);
+    showStatus("تم نسخ الكود: " + text, true);
+}
+
+async function del(id) { 
+    if(confirm('هل أنت متأكد من حذف هذا الكود؟')) { 
+        await fetch(API + '/api/admin/codes/' + id, {
+            method: 'DELETE',
+            headers: {'x-admin-token': tk()}
+        }); 
+        loadCodes(); 
+    } 
+}
+</script>
+</body>
+</html>
 
 function copyText(text) {
     navigator.clipboard.writeText(text);
