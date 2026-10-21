@@ -1,20 +1,28 @@
 const express = require('express');
 const Database = require('better-sqlite3');
 const crypto = require('crypto');
-const cors = require('cors'); // تمت إضافة هذه المكتبة
+const cors = require('cors');
+const rateLimit = require('express-rate-limit'); // مكتبة الحماية
 const app = express();
 const db = new Database('keys.db');
 
-app.use(cors()); // تم تفعيل السماح بالاتصال من المتصفحات
+app.use(cors());
 app.use(express.json());
 app.use(express.static('.')); 
+
+// --- إعداد الحماية (Rate Limiting) لمنع تخمين الأكواد ---
+const verifyLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 دقيقة
+    max: 15, // 15 محاولة كحد أقصى لكل IP
+    message: { valid: false, reason: "too_many_requests" }
+});
 
 // --- إعداد قاعدة البيانات ---
 db.exec(`
 CREATE TABLE IF NOT EXISTS codes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     code TEXT UNIQUE NOT NULL,
-    duration_hours INTEGER NOT NULL,
+    duration_hours REAL NOT NULL,
     max_devices INTEGER DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP,
@@ -31,7 +39,6 @@ CREATE TABLE IF NOT EXISTS activations (
 );
 `);
 
-// الرمز السري للوحة التحكم
 const ADMIN_TOKEN = "Nacer_Nacer_22"; 
 
 function adminAuth(req, res, next) {
@@ -40,14 +47,14 @@ function adminAuth(req, res, next) {
     next();
 }
 
-// توليد الكود بالبادئة Nacer
 function generateCode(prefix = "Nacer") {
     const part = () => crypto.randomBytes(2).toString('hex').toUpperCase();
     return `${prefix}-${part()}-${part()}-${part()}`;
 }
 
 // ========== API للعميل (التطبيق) ==========
-app.post('/api/verify', (req, res) => {
+// تمت إضافة verifyLimiter هنا لحماية المسار
+app.post('/api/verify', verifyLimiter, (req, res) => {
     const { code, device_id } = req.body;
     if (!code || !device_id) return res.json({ valid: false, reason: "missing_params" });
 
@@ -102,14 +109,13 @@ app.delete('/api/admin/codes/:id', adminAuth, (req, res) => {
     res.json({ ok: true });
 });
 
-app.patch('/api/admin/codes/:id', adminAuth, (req, res) => {
-    db.prepare("UPDATE codes SET is_active = ? WHERE id = ?").run(req.body.is_active ? 1 : 0, req.params.id);
+app.delete('/api/admin/codes/:id/reset', adminAuth, (req, res) => {
+    db.prepare("DELETE FROM activations WHERE code_id = ?").run(req.params.id);
     res.json({ ok: true });
 });
 
-// --- مسار جديد لإعادة تعيين المفتاح (حذف الأجهزة المرتبطة) ---
-app.delete('/api/admin/codes/:id/reset', adminAuth, (req, res) => {
-    db.prepare("DELETE FROM activations WHERE code_id = ?").run(req.params.id);
+app.patch('/api/admin/codes/:id', adminAuth, (req, res) => {
+    db.prepare("UPDATE codes SET is_active = ? WHERE id = ?").run(req.body.is_active ? 1 : 0, req.params.id);
     res.json({ ok: true });
 });
 
