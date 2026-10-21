@@ -63,14 +63,16 @@
     }
     .card:hover { border-color: #333; }
 
-    input { 
+    /* تنسيق موحد للخانات والقائمة المنسدلة */
+    input, select { 
         width: 100%; padding: 14px; margin: 5px 0; 
         border-radius: 8px; border: 1px solid #333; 
         background: #000; color: #fff; 
         font-size: 16px; outline: none; transition: 0.3s;
+        font-family: 'Cairo', sans-serif;
     }
     
-    input:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(229,9,20,0.2); }
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(229,9,20,0.2); }
     
     button { 
         width: 100%; padding: 14px; margin: 8px 0; 
@@ -89,8 +91,10 @@
     .btn-danger { background: linear-gradient(135deg, #333 0%, #111 100%); border: 1px solid #444; box-shadow: none; }
     .btn-danger:hover { background: #442222; border-color: var(--primary); }
 
-    .row { display: flex; gap: 10px; flex-wrap: wrap; }
-    .row input { flex: 1; text-align: center; min-width: 80px; }
+    /* تقسيم الصفوف */
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; }
+    .row input { flex: 1; text-align: center; }
+    .row select { flex: 0 0 100px; text-align: center; cursor: pointer; }
 
     /* تصميم الجدول */
     .table-wrapper { overflow-x: auto; margin-top: 20px; border-radius: 8px; border: 1px solid #222; }
@@ -149,10 +153,18 @@
 
     <!-- قسم إنشاء الأكواد -->
     <div class="card" id="create-section" style="display: none;">
+        <!-- الصف الأول: المدة ووحدة القياس -->
         <div class="row">
-            <input type="number" id="dur" value="24" placeholder="المدة (ساعة)">
-            <input type="number" id="dev" value="1" placeholder="الأجهزة">
-            <input type="number" id="cnt" value="1" placeholder="العدد">
+            <input type="number" id="dur" value="24" placeholder="المدة" min="1">
+            <select id="time_unit">
+                <option value="hours">ساعة</option>
+                <option value="minutes">دقيقة</option>
+            </select>
+        </div>
+        <!-- الصف الثاني: الأجهزة والعدد -->
+        <div class="row">
+            <input type="number" id="dev" value="1" placeholder="عدد الأجهزة" min="1">
+            <input type="number" id="cnt" value="1" placeholder="عدد الأكواد" min="1">
         </div>
         <button onclick="createCode()" id="btn-create">
             <i class="fa-solid fa-plus"></i> إنشاء الأكواد
@@ -219,6 +231,14 @@
         }
     }
 
+    // دالة مساعدة لعرض المدة بشكل جميل
+    function formatDuration(hours) {
+        if (hours < 1) {
+            return Math.round(hours * 60) + ' دقيقة';
+        }
+        return hours + ' ساعة';
+    }
+
     // تحميل الأكواد
     async function loadCodes() {
         if(!tk()) return showToast("الرجاء إدخال الرمز السري أولاً", true);
@@ -263,7 +283,7 @@
             tr.innerHTML = `
                 <td>#${c.id}</td>
                 <td class="code-cell">${c.code}</td>
-                <td>${c.duration_hours} س</td>
+                <td>${formatDuration(c.duration_hours)}</td>
                 <td style="color:${c.is_active ? '#22c55e' : '#e50914'}; font-weight: bold;">
                     ${c.is_active ? 'مفعل' : 'معطل'}
                 </td>
@@ -292,11 +312,21 @@
         });
     }
 
-    // إنشاء كود
+    // إنشاء كود (مع التحويل بين الساعات والدقائق)
     async function createCode() {
         setLoading('btn-create', true);
+        
+        const durationValue = +document.getElementById('dur').value;
+        const timeUnit = document.getElementById('time_unit').value;
+        
+        // تحويل الدقائق إلى ساعات للـ API
+        let durationInHours = durationValue;
+        if (timeUnit === 'minutes') {
+            durationInHours = durationValue / 60;
+        }
+
         const body = { 
-            duration_hours: +document.getElementById('dur').value, 
+            duration_hours: durationInHours, // السيرفر يفهم الكسور (0.5 = 30 دقيقة)
             max_devices: +document.getElementById('dev').value, 
             count: +document.getElementById('cnt').value 
         };
