@@ -107,5 +107,11 @@ app.patch('/api/admin/codes/:id', adminAuth, (req, res) => {
     res.json({ ok: true });
 });
 
+// --- مسار جديد لإعادة تعيين المفتاح (حذف الأجهزة المرتبطة) ---
+app.delete('/api/admin/codes/:id/reset', adminAuth, (req, res) => {
+    db.prepare("DELETE FROM activations WHERE code_id = ?").run(req.params.id);
+    res.json({ ok: true });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server on port ${PORT}`));
