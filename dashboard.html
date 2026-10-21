@@ -19,7 +19,15 @@
         padding: 30px; border-radius: 12px; border: 1px solid #e50914; 
         text-align: center; box-shadow: 0 0 20px rgba(229, 9, 20, 0.2);
     }
-    img.logo { width: 100px; height: 100px; border-radius: 50%; border: 3px solid #e50914; box-shadow: 0 0 15px rgba(229, 9, 20, 0.5); margin-bottom: 10px; object-fit: cover;}
+    
+    /* تم استخدام رابط Imgur الجديد هنا */
+    img.logo { 
+        width: 100px; height: 100px; border-radius: 50%; 
+        border: 3px solid #e50914; 
+        box-shadow: 0 0 15px rgba(229, 9, 20, 0.5); 
+        margin-bottom: 10px; object-fit: cover;
+    }
+    
     h1 { color: #e50914; font-size: 24px; margin-bottom: 25px; text-shadow: 0 0 10px rgba(229,9,20,0.5); }
     .card { background: rgba(20, 5, 5, 0.8); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-right: 3px solid #e50914; border-left: 1px solid #333; border-top: 1px solid #333; border-bottom: 1px solid #333; }
     input { width: 100%; padding: 12px; margin: 5px 0; border-radius: 6px; border: 1px solid #444; background: #000; color: #fff; font-size: 16px; outline: none; transition: 0.3s; }
@@ -47,8 +55,9 @@
 <body>
 
 <div class="container">
-    <!-- تم استخدام رابط مستقر لصورة الجمجمة هنا -->
-    <img src="https://i.imgur.com/lbr98b.png" alt="Logo" class="logo">
+    <!-- رابط Imgur الجديد -->
+    <img src="https://i.imgur.com/kf1AmpO.png" alt="Logo" class="logo">
+    
     <h1>Control panel Nacer_22</h1>
 
     <div class="card">
@@ -130,7 +139,6 @@
         loadCodes();
     }
 
-    // دالة إعادة تعيين الجهاز (Reset)
     async function resetDevice(id) {
         if(!confirm("هل أنت متأكد من إعادة تعيين هذا المفتاح؟ سيتم فصل الأجهزة الحالية ليتمكن جهاز جديد من استخدامه.")) return;
         const r = await fetch(API + '/api/admin/codes/' + id + '/reset', { method: 'DELETE', headers: {'x-admin-token': tk()} });
