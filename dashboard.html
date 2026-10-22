@@ -33,7 +33,7 @@
         font-size: 14px; line-height: 1.5;
     }
 
-    /* ---------------- النافذة المنبثقة (Modal) ---------------- */
+    /* ---------------- نافذة تسجيل الدخول ---------------- */
     .login-modal {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
@@ -54,7 +54,7 @@
     }
     @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    .login-logo { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--primary-red); margin-bottom: 15px; box-shadow: 0 0 15px rgba(229, 9, 20, 0.4); }
+    .login-logo { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--primary-red); margin-bottom: 15px; box-shadow: 0 0 15px rgba(229, 9, 20, 0.4); background: #000; object-fit: cover;}
     .login-title { font-size: 20px; font-weight: 900; margin-bottom: 25px; color: #fff; }
     .login-title span { color: var(--primary-red); }
 
@@ -67,7 +67,7 @@
     .login-input-group i { color: var(--primary-red); margin-left: 10px; }
     .login-input-group input { flex: 1; background: transparent; border: none; color: #fff; padding: 12px 0; outline: none; font-size: 16px; text-align: center; letter-spacing: 2px; }
     
-    .login-error { color: var(--error); font-size: 13px; font-weight: bold; margin-bottom: 15px; display: none; }
+    .login-error { color: var(--error); font-size: 13px; font-weight: bold; margin-bottom: 15px; display: none; line-height: 1.4; }
     .login-error.show { display: block; }
 
     /* ---------------- لوحة التحكم الأساسية ---------------- */
@@ -203,7 +203,7 @@
                 <input type="password" id="tokenInput" placeholder="أدخل كلمة المرور" onkeypress="handleKeyPress(event)">
             </div>
             
-            <div class="login-error" id="login-error">كلمة المرور غير صحيحة!</div>
+            <div class="login-error" id="login-error">كلمة المرور غير صحيحة أو السيرفر يستغرق وقتاً للاستيقاظ.</div>
             
             <button onclick="login()" id="btn-login">
                 <i class="fa-solid fa-right-to-bracket"></i> دخول
@@ -325,5 +325,4 @@
             <p id="modal-desc">هل أنت متأكد؟</p>
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
-                <button class="btn-confirm" id="modal-confirm-btn">تأكيد</button>
            
