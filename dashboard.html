@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Control panel Nacer_22</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
     :root {
@@ -15,85 +15,100 @@
         --card-bg: rgba(15, 5, 5, 0.85);
         --gold: #ffcc00;
         --text-main: #ffffff;
-        --text-muted: #888888;
+        --text-muted: #9ca3af;
         --success: #22c55e;
         --error: #ef4444;
+        --info: #3b82f6;
+        --border-color: rgba(229, 9, 20, 0.3);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; }
     
     body { 
         background-color: var(--bg-dark);
         background-image: radial-gradient(circle at 50% 0%, rgba(139, 0, 0, 0.2) 0%, transparent 60%);
         color: var(--text-main); 
         display: flex; justify-content: center; align-items: flex-start;
-        min-height: 100vh; padding: 15px; padding-top: 30px;
+        min-height: 100vh; padding: 15px; padding-top: 25px;
+        font-size: 14px; line-height: 1.5;
     }
 
     .container { 
-        width: 100%; max-width: 700px; 
+        width: 100%; max-width: 900px; 
         background: var(--card-bg); 
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(12px);
         padding: 25px 20px; 
         border-radius: 16px; 
-        border: 1px solid rgba(229, 9, 20, 0.4); 
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(229, 9, 20, 0.1);
+        border: 1px solid var(--border-color); 
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(229, 9, 20, 0.05);
     }
     
-    /* ترويسة الصفحة */
-    .header-section {
-        display: flex; flex-direction: column; align-items: center; margin-bottom: 25px;
-    }
-    .logo-wrapper {
-        position: relative; width: 90px; height: 90px; margin-bottom: 15px;
-        display: flex; justify-content: center; align-items: center;
-    }
-    .logo-wrapper::before {
-        content: ''; position: absolute; width: 100%; height: 100%;
-        background: radial-gradient(circle, rgba(229, 9, 20, 0.4) 0%, transparent 70%);
-        border-radius: 50%; filter: blur(10px); z-index: -1;
-    }
-    .logo-wrapper img { 
-        width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--primary-red);
-        object-fit: cover; box-shadow: 0 0 15px rgba(229, 9, 20, 0.5);
-    }
+    /* رأس الصفحة */
+    .header-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 30px; }
+    .logo-wrapper { position: relative; width: 100px; height: 100px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; }
+    .logo-wrapper::before { content: ''; position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(229, 9, 20, 0.4) 0%, transparent 70%); border-radius: 50%; filter: blur(12px); z-index: -1; }
+    .logo-wrapper img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--primary-red); object-fit: cover; box-shadow: 0 0 15px rgba(229, 9, 20, 0.5); background: #000; }
 
-    h1 { color: var(--text-main); font-size: 22px; font-weight: 900; letter-spacing: 1px;}
+    h1 { color: var(--text-main); font-size: 24px; font-weight: 900; letter-spacing: 1px; text-align: center;}
     h1 span { color: var(--primary-red); text-shadow: 0 0 10px rgba(229, 9, 20, 0.5); }
 
-    /* قسم الإنشاء */
-    .card { 
-        background: rgba(0, 0, 0, 0.4); 
-        padding: 20px; 
-        border-radius: 12px; 
-        margin-bottom: 25px; 
-        border: 1px solid rgba(255, 255, 255, 0.05);
+    /* بطاقات الإحصائيات */
+    .stats-grid {
+        display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 25px;
     }
+    @media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
     
-    .form-grid {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;
+    .stat-card {
+        background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px;
+        padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
     }
-    @media (min-width: 600px) {
-        .form-grid { grid-template-columns: 1.5fr 1fr 1fr; }
-    }
+    .stat-card i { font-size: 20px; margin-bottom: 8px; color: var(--text-muted); }
+    .stat-card .value { font-size: 22px; font-weight: 900; color: #fff; margin-bottom: 4px; }
+    .stat-card .label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+    
+    .stat-card.total i { color: var(--gold); }
+    .stat-card.active i { color: var(--success); }
+    .stat-card.used i { color: var(--info); }
+    .stat-card.expired i { color: var(--error); }
 
-    .input-group { display: flex; flex-direction: column; gap: 8px; }
-    .input-group label { font-size: 13px; color: var(--text-muted); font-weight: bold; }
+    /* قسم الإنشاء */
+    .section-card { 
+        background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 12px; 
+        margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .section-title { font-size: 18px; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: #fff; border-bottom: 1px solid rgba(229, 9, 20, 0.2); padding-bottom: 10px; }
+    .section-title i { color: var(--primary-red); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px; }
+    @media (min-width: 600px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { font-size: 13px; color: var(--text-muted); font-weight: 700; }
     
-    input, select { 
-        width: 100%; padding: 12px; 
-        border-radius: 8px; border: 1px solid #333; 
-        background: #000; color: #fff; 
-        font-size: 15px; outline: none; transition: 0.3s;
+    input, select, textarea { 
+        width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid #333; 
+        background: #0a0a0a; color: #fff; font-size: 15px; outline: none; transition: 0.3s;
         font-family: 'Cairo', sans-serif;
     }
-    input:focus, select:focus { border-color: var(--primary-red); box-shadow: 0 0 10px rgba(229, 9, 20, 0.2); }
-    
+    input:focus, select:focus, textarea:focus { border-color: var(--primary-red); box-shadow: 0 0 10px rgba(229, 9, 20, 0.2); }
+    textarea { resize: vertical; min-height: 60px; }
+
+    .duration-group { display: flex; gap: 8px; }
+    .duration-group input { flex: 2; }
+    .duration-group select { flex: 1; cursor: pointer; }
+
+    /* الخيارات الإضافية */
+    .advanced-toggle { display: flex; align-items: center; gap: 8px; color: var(--primary-red); font-size: 13px; font-weight: bold; cursor: pointer; margin-bottom: 15px; user-select: none; }
+    .advanced-toggle i { transition: transform 0.3s; }
+    .advanced-toggle.open i { transform: rotate(180deg); }
+    .advanced-options { display: none; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed #333; }
+    .advanced-options.show { display: grid; }
+    @media (min-width: 600px) { .advanced-options { grid-template-columns: 1fr 1fr; } .advanced-options .full-width { grid-column: span 2; } }
+
     button { 
-        width: 100%; padding: 14px; 
-        border-radius: 8px; border: none; 
+        width: 100%; padding: 14px; border-radius: 8px; border: none; 
         background: linear-gradient(180deg, var(--primary-red) 0%, var(--dark-red) 100%); 
-        color: #fff; font-weight: bold; font-size: 16px; cursor: pointer; 
+        color: #fff; font-weight: 900; font-size: 16px; cursor: pointer; 
         transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px;
         box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
     }
@@ -101,93 +116,116 @@
     button:active:not(:disabled) { transform: translateY(0); }
     button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    /* قسم الأكواد */
-    .list-header {
-        display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;
-    }
-    @media (min-width: 600px) {
-        .list-header { flex-direction: row; justify-content: space-between; align-items: center; }
-    }
-    .list-title { color: #fff; font-size: 18px; font-weight: 900; display: flex; align-items: center; gap: 10px;}
+    /* قسم القائمة والبحث */
+    .list-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; }
+    @media (min-width: 600px) { .list-header { flex-direction: row; justify-content: space-between; align-items: center; } }
     
-    /* البحث والفلاتر */
-    .controls { display: flex; flex-wrap: wrap; gap: 10px; }
-    .search-box { flex: 1; min-width: 150px; position: relative; }
-    .search-box input { padding-right: 35px; }
-    .search-box i { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .search-box { position: relative; width: 100%; }
+    .search-box input { padding-right: 40px; }
+    .search-box i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
     
-    .filter-group { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 5px; }
+    .filter-group { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
     .filter-btn { 
-        padding: 8px 15px; border-radius: 20px; border: 1px solid #333; 
-        background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer;
+        padding: 8px 16px; border-radius: 8px; border: 1px solid #333; 
+        background: #0a0a0a; color: var(--text-muted); font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; transition: 0.3s;
+        width: auto;
     }
-    .filter-btn.active { background: rgba(229, 9, 20, 0.2); border-color: var(--primary-red); color: #fff; }
+    .filter-btn.active { background: rgba(229, 9, 20, 0.15); border-color: var(--primary-red); color: #fff; }
 
-    /* بطاقة الكود */
-    .code-card {
-        background: rgba(20, 20, 20, 0.8);
-        border: 1px solid #333;
-        border-radius: 10px;
+    /* بطاقة المفتاح */
+    .key-card {
+        background: linear-gradient(145deg, rgba(20,20,20,0.9), rgba(10,10,10,0.9));
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
         padding: 15px;
-        margin-bottom: 12px;
+        margin-bottom: 15px;
         display: flex;
         flex-direction: column;
         gap: 12px;
         transition: 0.3s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
-    .code-card:hover { border-color: rgba(229, 9, 20, 0.4); }
+    .key-card:hover { border-color: rgba(229, 9, 20, 0.4); box-shadow: 0 4px 15px rgba(229, 9, 20, 0.1); }
 
-    /* تخطيط البطاقة للشاشات الكبيرة */
-    @media (min-width: 600px) {
-        .code-card { flex-direction: row; justify-content: space-between; align-items: center; padding: 15px 20px; }
+    .key-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .key-text { 
+        font-family: monospace; font-size: 16px; color: var(--gold); font-weight: 900; 
+        word-break: break-all; direction: ltr; text-align: right;
     }
+    .badge { 
+        padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; 
+        display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+    }
+    .badge.active { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
+    .badge.used { background: rgba(59, 130, 246, 0.15); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge.expired { background: rgba(239, 68, 68, 0.15); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge.disabled { background: rgba(156, 163, 175, 0.15); color: var(--text-muted); border: 1px solid rgba(156, 163, 175, 0.3); }
 
-    .code-info { display: flex; flex-direction: column; gap: 5px; }
-    .key-code { 
-        font-family: monospace; font-size: 16px; color: var(--gold); font-weight: bold; 
-        word-break: break-all; /* لحل مشكلة القطع */
+    .key-details { 
+        display: grid; grid-template-columns: 1fr 1fr; gap: 8px; 
+        font-size: 12px; color: var(--text-muted); background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;
     }
-    .key-meta { display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); }
+    .key-details span { display: flex; align-items: center; gap: 5px; }
+    .key-details i { color: #666; width: 14px; text-align: center; }
     
-    .status-badge {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold;
-    }
-    .status-active { background: rgba(34, 197, 94, 0.1); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.2); }
-    .status-disabled { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); }
-
-    .actions { display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap;}
-    @media (min-width: 600px) { .actions { justify-content: flex-end; } }
-
+    .key-actions { display: flex; gap: 8px; }
     .action-btn { 
-        padding: 8px 12px; border-radius: 6px; border: none; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px;
-        width: auto;
+        flex: 1; padding: 10px 0; border-radius: 6px; border: none; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 5px;
+        color: #fff;
     }
     .action-btn:active { transform: scale(0.95); }
-    .btn-copy { background: #1e3a8a; color: #fff; border: 1px solid #3b82f6; }
-    .btn-copy:hover { background: #2563eb; }
-    .btn-reset { background: #854d0e; color: #fff; border: 1px solid #eab308; }
-    .btn-reset:hover { background: #ca8a04; }
-    .btn-del { background: #7f1d1d; color: #fff; border: 1px solid #ef4444; }
-    .btn-del:hover { background: #b91c1c; }
+    .btn-copy { background: #1e3a8a; border: 1px solid #3b82f6; }
+    .btn-reset { background: #854d0e; border: 1px solid #eab308; }
+    .btn-del { background: #7f1d1d; border: 1px solid #ef4444; }
+
+    /* حالة فارغة */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-state i { font-size: 40px; color: #333; margin-bottom: 15px; }
+    .empty-state p { font-size: 15px; margin-bottom: 5px; }
+    .empty-state span { font-size: 12px; }
+
+    /* ترقيم الصفحات */
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
+    .page-btn { 
+        padding: 8px 15px; background: #111; border: 1px solid #333; color: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;
+    }
+    .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .page-info { font-size: 13px; color: var(--text-muted); font-weight: bold; }
 
     /* إشعارات */
     #toast { 
         position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); 
-        background: #222; color: #fff; padding: 15px 25px; border-radius: 8px; 
-        font-weight: bold; transition: 0.4s; z-index: 1000; 
-        box-shadow: 0 5px 15px rgba(0,0,0,0.5); border-right: 4px solid var(--success);
-        display: flex; align-items: center; gap: 10px;
+        background: #111; color: #fff; padding: 15px 25px; border-radius: 8px; 
+        font-weight: bold; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8); border-right: 4px solid var(--success);
+        display: flex; align-items: center; gap: 10px; font-size: 14px;
     }
     #toast.show { bottom: 30px; }
     #toast.error { border-right-color: var(--primary-red); }
 
+    /* نافذة تأكيد مخصصة */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+        display: none; justify-content: center; align-items: center; z-index: 1001;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+        background: #111; border: 1px solid var(--primary-red); border-radius: 12px;
+        padding: 25px; width: 90%; max-width: 350px; text-align: center;
+        box-shadow: 0 0 30px rgba(229, 9, 20, 0.3);
+    }
+    .modal-box h3 { margin-bottom: 10px; color: #fff; font-size: 18px; }
+    .modal-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-actions button { padding: 10px; font-size: 14px; }
+    .btn-cancel { background: #333; box-shadow: none; }
+    .btn-confirm { background: var(--primary-red); box-shadow: none; }
+
     /* لودر */
     .fa-spinner { animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
-
-    /* حالة القائمة الفارغة */
-    .empty-state { text-align: center; padding: 30px; color: var(--text-muted); font-size: 14px; }
 </style>
 </head>
 <body>
@@ -201,60 +239,106 @@
         <h1>Control panel <span>Nacer_22</span></h1>
     </div>
 
+    <!-- الإحصائيات -->
+    <div class="stats-grid" id="stats-section" style="display: none;">
+        <div class="stat-card total">
+            <i class="fa-solid fa-key"></i>
+            <div class="value" id="stat-total">0</div>
+            <div class="label">إجمالي المفاتيح</div>
+        </div>
+        <div class="stat-card active">
+            <i class="fa-solid fa-check-circle"></i>
+            <div class="value" id="stat-active">0</div>
+            <div class="label">مفاتيح فعالة</div>
+        </div>
+        <div class="stat-card used">
+            <i class="fa-solid fa-user-check"></i>
+            <div class="value" id="stat-used">0</div>
+            <div class="label">مفاتيح مستخدمة</div>
+        </div>
+        <div class="stat-card expired">
+            <i class="fa-solid fa-xmark-circle"></i>
+            <div class="value" id="stat-expired">0</div>
+            <div class="label">منتهية / معطلة</div>
+        </div>
+    </div>
+
     <!-- قسم الإنشاء -->
-    <div class="card" id="create-section">
+    <div class="section-card" id="create-section">
+        <div class="section-title"><i class="fa-solid fa-plus-circle"></i> إنشاء مفاتيح جديدة</div>
+        
         <div class="form-grid">
             <div class="input-group">
                 <label>مدة الصلاحية</label>
-                <div style="display: flex; gap: 5px;">
-                    <input type="number" id="dur" value="24" min="1" style="flex: 1;">
-                    <select id="time_unit" style="flex: 1;">
+                <div class="duration-group">
+                    <input type="number" id="dur" value="24" min="1">
+                    <select id="time_unit">
                         <option value="hours">ساعة</option>
-                        <option value="minutes">دقيقة</option>
+                        <option value="days">يوم</option>
+                        <option value="weeks">أسبوع</option>
+                        <option value="months">شهر</option>
                     </select>
                 </div>
             </div>
             <div class="input-group">
-                <label>عدد الأجهزة</label>
-                <input type="number" id="dev" value="1" min="1" placeholder="الحد الأقصى">
-            </div>
-            <div class="input-group">
-                <label>عدد الأكواد</label>
-                <input type="number" id="cnt" value="1" min="1" placeholder="العدد">
+                <label>عدد المفاتيح المطلوبة</label>
+                <input type="number" id="cnt" value="1" min="1">
             </div>
         </div>
+
+        <div class="advanced-toggle" onclick="toggleAdvanced()">
+            <i class="fa-solid fa-chevron-down"></i> خيارات إضافية (الأجهزة، ملاحظات)
+        </div>
+
+        <div class="advanced-options" id="advanced-options">
+            <div class="input-group">
+                <label>عدد الأجهزة المسموح بها</label>
+                <input type="number" id="dev" value="1" min="1">
+            </div>
+            <div class="input-group full-width">
+                <label>ملاحظة داخلية (اختياري)</label>
+                <input type="text" id="note" placeholder="مثال: مفتاح لمجموعة VIP...">
+            </div>
+        </div>
+
         <button onclick="createCode()" id="btn-create">
-            <i class="fa-solid fa-plus"></i> إنشاء الأكواد
+            <i class="fa-solid fa-plus"></i> إنشاء الأكواد الآن
         </button>
     </div>
 
-    <!-- قسم القائمة -->
-    <div id="list-section">
+    <!-- قسم إدارة القائمة -->
+    <div class="section-card" id="list-section" style="display: none;">
         <div class="list-header">
-            <div class="list-title">
-                <i class="fa-solid fa-list"></i> الأكواد المسجلة
+            <div class="section-title" style="border: none; margin: 0; padding: 0;">
+                <i class="fa-solid fa-list-ul"></i> الأكواد المسجلة
             </div>
-            <button class="action-btn btn-del" onclick="deleteAllCodes()" style="width: auto;">
+            <button class="action-btn btn-del" onclick="confirmDeleteAll()" style="width: auto; padding: 8px 15px;">
                 <i class="fa-solid fa-trash"></i> حذف الكل
             </button>
         </div>
 
-        <!-- البحث والفلاتر -->
         <div class="controls">
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="ابحث عن كود..." oninput="filterAndSearch()">
+                <input type="text" id="searchInput" placeholder="ابحث عن كود أو جزء منه..." oninput="handleSearch()">
                 <i class="fa-solid fa-search"></i>
             </div>
             <div class="filter-group">
-                <button class="filter-btn active" onclick="setFilter('all')">الكل</button>
-                <button class="filter-btn" onclick="setFilter('active')">مفعل</button>
-                <button class="filter-btn" onclick="setFilter('disabled')">معطل</button>
+                <button class="filter-btn active" onclick="setFilter('all', this)">الكل</button>
+                <button class="filter-btn" onclick="setFilter('active', this)">فعال</button>
+                <button class="filter-btn" onclick="setFilter('used', this)">مستخدم</button>
+                <button class="filter-btn" onclick="setFilter('expired', this)">منتهي</button>
+                <button class="filter-btn" onclick="setFilter('disabled', this)">معطل</button>
             </div>
         </div>
 
-        <!-- حاوية الأكواد -->
-        <div id="codes-container" style="margin-top: 15px;">
-            <!-- سيتم تعبئتها بالجافاسكريبت -->
+        <div id="codes-container">
+            <!-- سيتم تعبئتها ديناميكياً -->
+        </div>
+
+        <div class="pagination" id="pagination">
+            <button class="page-btn" onclick="changePage(-1)" id="btn-prev">السابق</button>
+            <span class="page-info" id="page-info">1 / 1</span>
+            <button class="page-btn" onclick="changePage(1)" id="btn-next">التالي</button>
         </div>
     </div>
 </div>
@@ -265,15 +349,51 @@
     <span id="toast-text">تم بنجاح!</span>
 </div>
 
-<script>
-    // ⚠️ الاحتفاظ برابط السيرفر الأصلي ⚠️
-    const API = "https://key-system-yn0o.onrender.com"; 
-    const tk = () => localStorage.getItem('admin_token') || prompt("أدخل الرمز السري (Admin Token):");
-    
-    let allCodes = []; // لتخزين الأكواد للبحث والتصفية
-    let currentFilter = 'all';
+<!-- نافذة تأكيد -->
+<div class="modal-overlay" id="confirm-modal">
+    <div class="modal-box">
+        <h3 id="modal-title">تأكيد الإجراء</h3>
+        <p id="modal-desc">هل أنت متأكد؟</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+            <button class="btn-confirm" id="modal-confirm-btn">تأكيد</button>
+        </div>
+    </div>
+</div>
 
-    // إعدادات الإشعارات
+<script>
+    // ⚠️ إعدادات السيرفر الأصلية (لم يتم تغييرها) ⚠️
+    const API = "https://key-system-yn0o.onrender.com"; 
+    
+    // المتغيرات العامة
+    let allCodes = [];
+    let filteredCodes = [];
+    let currentFilter = 'all';
+    let currentSearch = '';
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let token = "";
+
+    // --- إدارة الرمز السري ---
+    function getToken() {
+        if (!token) {
+            token = prompt("أدخل الرمز السري (Admin Token):");
+            if (token) localStorage.setItem('admin_token', token);
+        }
+        return token;
+    }
+
+    window.onload = () => {
+        token = localStorage.getItem('admin_token');
+        if (token) {
+            fetchCodes();
+        } else {
+            getToken();
+            if (token) fetchCodes();
+        }
+    };
+
+    // --- الإشعارات ---
     function showToast(msg, isError = false) {
         const toast = document.getElementById('toast');
         const icon = document.getElementById('toast-icon');
@@ -292,226 +412,37 @@
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // حالة التحميل للأزرار
-    function setLoading(btnId, isLoading, defaultText) {
-        const btn = document.getElementById(btnId);
-        if(isLoading) {
-            btn.disabled = true;
-            btn.dataset.oldText = defaultText || btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner"></i> جاري المعالجة...';
-        } else {
-            btn.disabled = false;
-            btn.innerHTML = btn.dataset.oldText || defaultText;
-        }
-    }
-
-    // جلب الأكواد من السيرفر
-    async function loadCodes() {
-        const token = tk();
-        if(!token) return;
-
-        try {
-            const res = await fetch(`${API}/api/admin/codes`, { 
-                headers: {'x-admin-token': token} 
-            });
-            
-            if(res.status === 403) {
-                showToast("الرمز السري خاطئ!", true);
-                localStorage.removeItem('admin_token');
-                return;
-            }
-            
-            allCodes = await res.json();
-            filterAndSearch();
-        } catch(err) {
-            showToast("خطأ في الاتصال بالسيرفر", true);
-        }
-    }
-
-    // عرض الأكواد في الواجهة
-    function renderCodes(codesToRender) {
-        const container = document.getElementById('codes-container');
-        container.innerHTML = '';
-
-        if (codesToRender.length === 0) {
-            container.innerHTML = '<div class="empty-state">لا توجد أكواد لعرضها</div>';
-            return;
-        }
-
-        codesToRender.forEach(c => {
-            // حساب المدة بشكل مقروء
-            let durationText = c.duration_hours >= 1 ? `${c.duration_hours} ساعة` : `${Math.round(c.duration_hours * 60)} دقيقة`;
-            let statusClass = c.is_active ? 'status-active' : 'status-disabled';
-            let statusText = c.is_active ? 'مفعل' : 'معطل';
-
-            const card = document.createElement('div');
-            card.className = 'code-card';
-            card.innerHTML = `
-                <div class="code-info">
-                    <div class="key-code">${c.code}</div>
-                    <div class="key-meta">
-                        <span><i class="fa-regular fa-clock"></i> ${durationText}</span>
-                        <span class="status-badge ${statusClass}">
-                            <i class="fa-solid fa-circle" style="font-size: 8px;"></i> ${statusText}
-                        </span>
-                    </div>
-                </div>
-                <div class="actions">
-                    <button class="action-btn btn-copy" onclick="copyCode('${c.code}')" title="نسخ">
-                        <i class="fa-regular fa-copy"></i> نسخ
-                    </button>
-                    <button class="action-btn btn-reset" onclick="resetDevice(${c.id})" title="تجديد/فصل الأجهزة">
-                        <i class="fa-solid fa-rotate-right"></i> ريسيت
-                    </button>
-                    <button class="action-btn btn-del" onclick="del(${c.id})" title="حذف">
-                        <i class="fa-solid fa-trash"></i> حذف
-                    </button>
-                </div>
-            `;
-            container.appendChild(card);
+    // --- النافذة المنبثقة للتأكيد ---
+    function showConfirm(title, desc, onConfirm) {
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-desc').innerText = desc;
+        const modal = document.getElementById('confirm-modal');
+        const btn = document.getElementById('modal-confirm-btn');
+        
+        // إزالة أي أحداث قديمة
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        
+        newBtn.addEventListener('click', () => {
+            closeModal();
+            onConfirm();
         });
-    }
-
-    // البحث والتصفية
-    function setFilter(filter) {
-        currentFilter = filter;
-        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        filterAndSearch();
-    }
-
-    function filterAndSearch() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         
-        const filtered = allCodes.filter(c => {
-            const matchesSearch = c.code.toLowerCase().includes(searchTerm);
-            const matchesFilter = 
-                currentFilter === 'all' ? true :
-                currentFilter === 'active' ? c.is_active === 1 : 
-                c.is_active === 0;
-            
-            return matchesSearch && matchesFilter;
-        });
-
-        renderCodes(filtered);
+        modal.classList.add('show');
     }
 
-    // نسخ الكود
-    function copyCode(code) {
-        navigator.clipboard.writeText(code).then(() => {
-            showToast("تم نسخ الكود بنجاح");
-        });
+    function closeModal() {
+        document.getElementById('confirm-modal').classList.remove('show');
     }
 
-    // إنشاء كود جديد
-    async function createCode() {
-        const token = tk();
-        const durationValue = +document.getElementById('dur').value;
-        const timeUnit = document.getElementById('time_unit').value;
-        const devices = +document.getElementById('dev').value;
-        const count = +document.getElementById('cnt').value;
-
-        if(durationValue <= 0 || devices <= 0 || count <= 0) {
-            return showToast("يرجى إدخال قيم صحيحة أكبر من صفر", true);
-        }
-
-        // تحويل الدقائق إلى ساعات إذا لزم الأمر
-        const durationInHours = timeUnit === 'minutes' ? durationValue / 60 : durationValue;
-
-        const body = { 
-            duration_hours: durationInHours, 
-            max_devices: devices, 
-            count: count 
-        };
-
-        setLoading('btn-create', true);
-        
-        try {
-            const res = await fetch(`${API}/api/admin/codes`, { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json', 'x-admin-token': token}, 
-                body: JSON.stringify(body) 
-            });
-            
-            if(res.ok) {
-                showToast("تم إنشاء الأكواد بنجاح");
-                loadCodes(); // إعادة تحميل القائمة
-            } else {
-                showToast("حدث خطأ أثناء الإنشاء", true);
-            }
-        } catch(err) {
-            showToast("خطأ في الاتصال", true);
-        } finally {
-            setLoading('btn-create', false, '<i class="fa-solid fa-plus"></i> إنشاء الأكواد');
-        }
+    // --- خيارات إضافية ---
+    function toggleAdvanced() {
+        const options = document.getElementById('advanced-options');
+        const icon = document.querySelector('.advanced-toggle i');
+        options.classList.toggle('show');
+        icon.classList.toggle('fa-chevron-down');
+        icon.classList.toggle('fa-chevron-up');
     }
 
-    // حذف كود واحد
-    async function del(id) {
-        if(!confirm("هل أنت متأكد من حذف هذا الكود نهائياً؟")) return;
-        
-        try {
-            const res = await fetch(`${API}/api/admin/codes/${id}`, { 
-                method: 'DELETE', 
-                headers: {'x-admin-token': tk()} 
-            });
-            if(res.ok) {
-                showToast("تم حذف الكود");
-                loadCodes();
-            }
-        } catch(err) {
-            showToast("حدث خطأ أثناء الحذف", true);
-        }
-    }
-
-    // إعادة تعيين الأجهزة (Reset)
-    async function resetDevice(id) {
-        if(!confirm("هل أنت متأكد من إعادة تعيين هذا المفتاح؟ سيتم فصل الأجهزة المرتبطة به.")) return;
-        
-        try {
-            const res = await fetch(`${API}/api/admin/codes/${id}/reset`, { 
-                method: 'DELETE', 
-                headers: {'x-admin-token': tk()} 
-            });
-            if(res.ok) {
-                showToast("تم إعادة تعيين المفتاح بنجاح");
-            } else {
-                showToast("حدث خطأ أثناء إعادة التعيين", true);
-            }
-        } catch(err) {
-            showToast("خطأ في الاتصال", true);
-        }
-    }
-
-    // حذف جميع الأكواد
-    async function deleteAllCodes() {
-        if(!confirm("تحذير: سيتم حذف جميع الأكواد نهائياً! هل أنت متأكد؟")) return;
-        
-        try {
-            const res = await fetch(`${API}/api/admin/codes`, { headers: {'x-admin-token': tk()} });
-            const rows = await res.json();
-            
-            for (let c of rows) {
-                await fetch(`${API}/api/admin/codes/${c.id}`, { 
-                    method: 'DELETE', 
-                    headers: {'x-admin-token': tk()} 
-                });
-            }
-            showToast("تم حذف جميع الأكواد");
-            loadCodes();
-        } catch (err) {
-            showToast("حدث خطأ أثناء الحذف", true);
-        }
-    }
-
-    // تشغيل جلب الأكواد عند فتح الصفحة
-    window.onload = () => {
-        if(localStorage.getItem('admin_token')) {
-            loadCodes();
-        } else {
-            setTimeout(() => { if(tk()) loadCodes(); }, 100);
-        }
-    };
-</script>
-</body>
-</html>
+    // --- جلب البيانات ---
+    asy
