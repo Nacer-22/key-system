@@ -33,6 +33,44 @@
         font-size: 14px; line-height: 1.5;
     }
 
+    /* ---------------- النافذة المنبثقة (Modal) ---------------- */
+    .login-modal {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 2000; transition: opacity 0.3s;
+    }
+    .login-modal.hidden { opacity: 0; pointer-events: none; }
+    
+    .login-box {
+        background: linear-gradient(145deg, #1a0505, #0a0000);
+        border: 1px solid var(--primary-red);
+        border-radius: 16px;
+        padding: 30px 25px;
+        width: 90%; max-width: 350px;
+        text-align: center;
+        box-shadow: 0 15px 40px rgba(229, 9, 20, 0.2), inset 0 0 20px rgba(229, 9, 20, 0.1);
+        animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .login-logo { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--primary-red); margin-bottom: 15px; box-shadow: 0 0 15px rgba(229, 9, 20, 0.4); }
+    .login-title { font-size: 20px; font-weight: 900; margin-bottom: 25px; color: #fff; }
+    .login-title span { color: var(--primary-red); }
+
+    .login-input-group {
+        display: flex; align-items: center;
+        background: #000; border: 1px solid #333; border-radius: 10px;
+        padding: 5px 15px; margin-bottom: 15px; transition: 0.3s;
+    }
+    .login-input-group:focus-within { border-color: var(--primary-red); box-shadow: 0 0 15px rgba(229, 9, 20, 0.3); }
+    .login-input-group i { color: var(--primary-red); margin-left: 10px; }
+    .login-input-group input { flex: 1; background: transparent; border: none; color: #fff; padding: 12px 0; outline: none; font-size: 16px; text-align: center; letter-spacing: 2px; }
+    
+    .login-error { color: var(--error); font-size: 13px; font-weight: bold; margin-bottom: 15px; display: none; }
+    .login-error.show { display: block; }
+
+    /* ---------------- لوحة التحكم الأساسية ---------------- */
     .container { 
         width: 100%; max-width: 900px; 
         background: var(--card-bg); 
@@ -41,11 +79,13 @@
         border-radius: 16px; 
         border: 1px solid var(--border-color); 
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(229, 9, 20, 0.05);
+        display: none; /* مخفي حتى يتم تسجيل الدخول */
     }
+    .container.show { display: block; animation: fadeIn 0.5s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
-    /* رأس الصفحة */
     .header-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 30px; }
-    .logo-wrapper { position: relative; width: 100px; height: 100px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; }
+    .logo-wrapper { position: relative; width: 90px; height: 90px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; }
     .logo-wrapper::before { content: ''; position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(229, 9, 20, 0.4) 0%, transparent 70%); border-radius: 50%; filter: blur(12px); z-index: -1; }
     .logo-wrapper img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--primary-red); object-fit: cover; box-shadow: 0 0 15px rgba(229, 9, 20, 0.5); background: #000; }
 
@@ -53,29 +93,19 @@
     h1 span { color: var(--primary-red); text-shadow: 0 0 10px rgba(229, 9, 20, 0.5); }
 
     /* بطاقات الإحصائيات */
-    .stats-grid {
-        display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 25px;
-    }
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 25px; }
     @media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
-    
-    .stat-card {
-        background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px;
-        padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-    }
+    .stat-card { background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
     .stat-card i { font-size: 20px; margin-bottom: 8px; color: var(--text-muted); }
     .stat-card .value { font-size: 22px; font-weight: 900; color: #fff; margin-bottom: 4px; }
     .stat-card .label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
-    
     .stat-card.total i { color: var(--gold); }
     .stat-card.active i { color: var(--success); }
     .stat-card.used i { color: var(--info); }
     .stat-card.expired i { color: var(--error); }
 
-    /* قسم الإنشاء */
-    .section-card { 
-        background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 12px; 
-        margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.05);
-    }
+    /* قسم الإنشاء والقائمة */
+    .section-card { background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.05); }
     .section-title { font-size: 18px; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: #fff; border-bottom: 1px solid rgba(229, 9, 20, 0.2); padding-bottom: 10px; }
     .section-title i { color: var(--primary-red); }
 
@@ -84,20 +114,12 @@
 
     .input-group { display: flex; flex-direction: column; gap: 6px; }
     .input-group label { font-size: 13px; color: var(--text-muted); font-weight: 700; }
-    
-    input, select, textarea { 
-        width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid #333; 
-        background: #0a0a0a; color: #fff; font-size: 15px; outline: none; transition: 0.3s;
-        font-family: 'Cairo', sans-serif;
-    }
+    input, select, textarea { width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid #333; background: #0a0a0a; color: #fff; font-size: 15px; outline: none; transition: 0.3s; font-family: 'Cairo', sans-serif; }
     input:focus, select:focus, textarea:focus { border-color: var(--primary-red); box-shadow: 0 0 10px rgba(229, 9, 20, 0.2); }
-    textarea { resize: vertical; min-height: 60px; }
-
     .duration-group { display: flex; gap: 8px; }
     .duration-group input { flex: 2; }
     .duration-group select { flex: 1; cursor: pointer; }
 
-    /* الخيارات الإضافية */
     .advanced-toggle { display: flex; align-items: center; gap: 8px; color: var(--primary-red); font-size: 13px; font-weight: bold; cursor: pointer; margin-bottom: 15px; user-select: none; }
     .advanced-toggle i { transition: transform 0.3s; }
     .advanced-toggle.open i { transform: rotate(180deg); }
@@ -105,117 +127,58 @@
     .advanced-options.show { display: grid; }
     @media (min-width: 600px) { .advanced-options { grid-template-columns: 1fr 1fr; } .advanced-options .full-width { grid-column: span 2; } }
 
-    button { 
-        width: 100%; padding: 14px; border-radius: 8px; border: none; 
-        background: linear-gradient(180deg, var(--primary-red) 0%, var(--dark-red) 100%); 
-        color: #fff; font-weight: 900; font-size: 16px; cursor: pointer; 
-        transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px;
-        box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
-    }
+    button { width: 100%; padding: 14px; border-radius: 8px; border: none; background: linear-gradient(180deg, var(--primary-red) 0%, var(--dark-red) 100%); color: #fff; font-weight: 900; font-size: 16px; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3); }
     button:hover:not(:disabled) { background: linear-gradient(180deg, var(--primary-hover) 0%, #a00000 100%); transform: translateY(-2px); }
     button:active:not(:disabled) { transform: translateY(0); }
     button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    /* قسم القائمة والبحث */
+    /* القائمة */
     .list-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; }
     @media (min-width: 600px) { .list-header { flex-direction: row; justify-content: space-between; align-items: center; } }
-    
     .controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
     .search-box { position: relative; width: 100%; }
     .search-box input { padding-right: 40px; }
     .search-box i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
-    
     .filter-group { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
-    .filter-btn { 
-        padding: 8px 16px; border-radius: 8px; border: 1px solid #333; 
-        background: #0a0a0a; color: var(--text-muted); font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; transition: 0.3s;
-        width: auto;
-    }
+    .filter-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid #333; background: #0a0a0a; color: var(--text-muted); font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; transition: 0.3s; width: auto; box-shadow: none; }
     .filter-btn.active { background: rgba(229, 9, 20, 0.15); border-color: var(--primary-red); color: #fff; }
 
-    /* بطاقة المفتاح */
-    .key-card {
-        background: linear-gradient(145deg, rgba(20,20,20,0.9), rgba(10,10,10,0.9));
-        border: 1px solid #2a2a2a;
-        border-radius: 12px;
-        padding: 15px;
-        margin-bottom: 15px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        transition: 0.3s;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    }
+    .key-card { background: linear-gradient(145deg, rgba(20,20,20,0.9), rgba(10,10,10,0.9)); border: 1px solid #2a2a2a; border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     .key-card:hover { border-color: rgba(229, 9, 20, 0.4); box-shadow: 0 4px 15px rgba(229, 9, 20, 0.1); }
-
     .key-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-    .key-text { 
-        font-family: monospace; font-size: 16px; color: var(--gold); font-weight: 900; 
-        word-break: break-all; direction: ltr; text-align: right;
-    }
-    .badge { 
-        padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; 
-        display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
-    }
+    .key-text { font-family: monospace; font-size: 16px; color: var(--gold); font-weight: 900; word-break: break-all; direction: ltr; text-align: right; }
+    .badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
     .badge.active { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
     .badge.used { background: rgba(59, 130, 246, 0.15); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.3); }
     .badge.expired { background: rgba(239, 68, 68, 0.15); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.3); }
     .badge.disabled { background: rgba(156, 163, 175, 0.15); color: var(--text-muted); border: 1px solid rgba(156, 163, 175, 0.3); }
-
-    .key-details { 
-        display: grid; grid-template-columns: 1fr 1fr; gap: 8px; 
-        font-size: 12px; color: var(--text-muted); background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;
-    }
+    .key-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; color: var(--text-muted); background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; }
     .key-details span { display: flex; align-items: center; gap: 5px; }
     .key-details i { color: #666; width: 14px; text-align: center; }
-    
     .key-actions { display: flex; gap: 8px; }
-    .action-btn { 
-        flex: 1; padding: 10px 0; border-radius: 6px; border: none; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 5px;
-        color: #fff;
-    }
+    .action-btn { flex: 1; padding: 10px 0; border-radius: 6px; border: none; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 5px; color: #fff; box-shadow: none; }
     .action-btn:active { transform: scale(0.95); }
     .btn-copy { background: #1e3a8a; border: 1px solid #3b82f6; }
     .btn-reset { background: #854d0e; border: 1px solid #eab308; }
     .btn-del { background: #7f1d1d; border: 1px solid #ef4444; }
 
-    /* حالة فارغة */
     .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
     .empty-state i { font-size: 40px; color: #333; margin-bottom: 15px; }
     .empty-state p { font-size: 15px; margin-bottom: 5px; }
     .empty-state span { font-size: 12px; }
 
-    /* ترقيم الصفحات */
-    .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
-    .page-btn { 
-        padding: 8px 15px; background: #111; border: 1px solid #333; color: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;
-    }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; display: none; }
+    .page-btn { padding: 8px 15px; background: #111; border: 1px solid #333; color: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; width: auto; box-shadow: none; }
     .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .page-info { font-size: 13px; color: var(--text-muted); font-weight: bold; }
 
-    /* إشعارات */
-    #toast { 
-        position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); 
-        background: #111; color: #fff; padding: 15px 25px; border-radius: 8px; 
-        font-weight: bold; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; 
-        box-shadow: 0 10px 30px rgba(0,0,0,0.8); border-right: 4px solid var(--success);
-        display: flex; align-items: center; gap: 10px; font-size: 14px;
-    }
+    #toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; padding: 15px 25px; border-radius: 8px; font-weight: bold; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 3000; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border-right: 4px solid var(--success); display: flex; align-items: center; gap: 10px; font-size: 14px; }
     #toast.show { bottom: 30px; }
     #toast.error { border-right-color: var(--primary-red); }
 
-    /* نافذة تأكيد مخصصة */
-    .modal-overlay {
-        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-        display: none; justify-content: center; align-items: center; z-index: 1001;
-    }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1001; }
     .modal-overlay.show { display: flex; }
-    .modal-box {
-        background: #111; border: 1px solid var(--primary-red); border-radius: 12px;
-        padding: 25px; width: 90%; max-width: 350px; text-align: center;
-        box-shadow: 0 0 30px rgba(229, 9, 20, 0.3);
-    }
+    .modal-box { background: #111; border: 1px solid var(--primary-red); border-radius: 12px; padding: 25px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 0 30px rgba(229, 9, 20, 0.3); }
     .modal-box h3 { margin-bottom: 10px; color: #fff; font-size: 18px; }
     .modal-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
     .modal-actions { display: flex; gap: 10px; }
@@ -223,226 +186,144 @@
     .btn-cancel { background: #333; box-shadow: none; }
     .btn-confirm { background: var(--primary-red); box-shadow: none; }
 
-    /* لودر */
     .fa-spinner { animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- الترويسة -->
-    <div class="header-section">
-        <div class="logo-wrapper">
-            <img src="https://i.imgur.com/kf1AmpO.png" alt="Logo">
-        </div>
-        <h1>Control panel <span>Nacer_22</span></h1>
-    </div>
-
-    <!-- الإحصائيات -->
-    <div class="stats-grid" id="stats-section" style="display: none;">
-        <div class="stat-card total">
-            <i class="fa-solid fa-key"></i>
-            <div class="value" id="stat-total">0</div>
-            <div class="label">إجمالي المفاتيح</div>
-        </div>
-        <div class="stat-card active">
-            <i class="fa-solid fa-check-circle"></i>
-            <div class="value" id="stat-active">0</div>
-            <div class="label">مفاتيح فعالة</div>
-        </div>
-        <div class="stat-card used">
-            <i class="fa-solid fa-user-check"></i>
-            <div class="value" id="stat-used">0</div>
-            <div class="label">مفاتيح مستخدمة</div>
-        </div>
-        <div class="stat-card expired">
-            <i class="fa-solid fa-xmark-circle"></i>
-            <div class="value" id="stat-expired">0</div>
-            <div class="label">منتهية / معطلة</div>
+    <!-- 1. النافذة المنبثقة لتسجيل الدخول -->
+    <div class="login-modal" id="login-modal">
+        <div class="login-box">
+            <img src="https://i.imgur.com/kf1AmpO.png" alt="Logo" class="login-logo">
+            <div class="login-title">Control panel <span>Nacer_22</span></div>
+            
+            <div class="login-input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="tokenInput" placeholder="أدخل كلمة المرور" onkeypress="handleKeyPress(event)">
+            </div>
+            
+            <div class="login-error" id="login-error">كلمة المرور غير صحيحة!</div>
+            
+            <button onclick="login()" id="btn-login">
+                <i class="fa-solid fa-right-to-bracket"></i> دخول
+            </button>
         </div>
     </div>
 
-    <!-- قسم الإنشاء -->
-    <div class="section-card" id="create-section">
-        <div class="section-title"><i class="fa-solid fa-plus-circle"></i> إنشاء مفاتيح جديدة</div>
-        
-        <div class="form-grid">
-            <div class="input-group">
-                <label>مدة الصلاحية</label>
-                <div class="duration-group">
-                    <input type="number" id="dur" value="24" min="1">
-                    <select id="time_unit">
-                        <option value="hours">ساعة</option>
-                        <option value="days">يوم</option>
-                        <option value="weeks">أسبوع</option>
-                        <option value="months">شهر</option>
-                    </select>
+    <!-- 2. محتوى لوحة التحكم (مخفي حتى يتم الدخول) -->
+    <div class="container" id="dashboard-container">
+        <div class="header-section">
+            <div class="logo-wrapper">
+                <img src="https://i.imgur.com/kf1AmpO.png" alt="Logo">
+            </div>
+            <h1>Control panel <span>Nacer_22</span></h1>
+        </div>
+
+        <div class="stats-grid" id="stats-section">
+            <div class="stat-card total">
+                <i class="fa-solid fa-key"></i>
+                <div class="value" id="stat-total">0</div>
+                <div class="label">إجمالي المفاتيح</div>
+            </div>
+            <div class="stat-card active">
+                <i class="fa-solid fa-check-circle"></i>
+                <div class="value" id="stat-active">0</div>
+                <div class="label">مفاتيح فعالة</div>
+            </div>
+            <div class="stat-card used">
+                <i class="fa-solid fa-user-check"></i>
+                <div class="value" id="stat-used">0</div>
+                <div class="label">مفاتيح مستخدمة</div>
+            </div>
+            <div class="stat-card expired">
+                <i class="fa-solid fa-xmark-circle"></i>
+                <div class="value" id="stat-expired">0</div>
+                <div class="label">منتهية / معطلة</div>
+            </div>
+        </div>
+
+        <div class="section-card" id="create-section">
+            <div class="section-title"><i class="fa-solid fa-plus-circle"></i> إنشاء مفاتيح جديدة</div>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>مدة الصلاحية</label>
+                    <div class="duration-group">
+                        <input type="number" id="dur" value="24" min="1">
+                        <select id="time_unit">
+                            <option value="hours">ساعة</option>
+                            <option value="days">يوم</option>
+                            <option value="weeks">أسبوع</option>
+                            <option value="months">شهر</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>عدد المفاتيح المطلوبة</label>
+                    <input type="number" id="cnt" value="1" min="1">
                 </div>
             </div>
-            <div class="input-group">
-                <label>عدد المفاتيح المطلوبة</label>
-                <input type="number" id="cnt" value="1" min="1">
-            </div>
-        </div>
 
-        <div class="advanced-toggle" onclick="toggleAdvanced()">
-            <i class="fa-solid fa-chevron-down"></i> خيارات إضافية (الأجهزة، ملاحظات)
-        </div>
-
-        <div class="advanced-options" id="advanced-options">
-            <div class="input-group">
-                <label>عدد الأجهزة المسموح بها</label>
-                <input type="number" id="dev" value="1" min="1">
+            <div class="advanced-toggle" onclick="toggleAdvanced()">
+                <i class="fa-solid fa-chevron-down"></i> خيارات إضافية (الأجهزة، ملاحظات)
             </div>
-            <div class="input-group full-width">
-                <label>ملاحظة داخلية (اختياري)</label>
-                <input type="text" id="note" placeholder="مثال: مفتاح لمجموعة VIP...">
-            </div>
-        </div>
 
-        <button onclick="createCode()" id="btn-create">
-            <i class="fa-solid fa-plus"></i> إنشاء الأكواد الآن
-        </button>
-    </div>
-
-    <!-- قسم إدارة القائمة -->
-    <div class="section-card" id="list-section" style="display: none;">
-        <div class="list-header">
-            <div class="section-title" style="border: none; margin: 0; padding: 0;">
-                <i class="fa-solid fa-list-ul"></i> الأكواد المسجلة
+            <div class="advanced-options" id="advanced-options">
+                <div class="input-group">
+                    <label>عدد الأجهزة المسموح بها</label>
+                    <input type="number" id="dev" value="1" min="1">
+                </div>
+                <div class="input-group full-width">
+                    <label>ملاحظة داخلية (اختياري)</label>
+                    <input type="text" id="note" placeholder="مثال: مفتاح لمجموعة VIP...">
+                </div>
             </div>
-            <button class="action-btn btn-del" onclick="confirmDeleteAll()" style="width: auto; padding: 8px 15px;">
-                <i class="fa-solid fa-trash"></i> حذف الكل
+
+            <button onclick="createCode()" id="btn-create">
+                <i class="fa-solid fa-plus"></i> إنشاء الأكواد الآن
             </button>
         </div>
 
-        <div class="controls">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="ابحث عن كود أو جزء منه..." oninput="handleSearch()">
-                <i class="fa-solid fa-search"></i>
+        <div class="section-card" id="list-section">
+            <div class="list-header">
+                <div class="section-title" style="border: none; margin: 0; padding: 0;">
+                    <i class="fa-solid fa-list-ul"></i> الأكواد المسجلة
+                </div>
+                <button class="action-btn btn-del" onclick="confirmDeleteAll()" style="width: auto; padding: 8px 15px;">
+                    <i class="fa-solid fa-trash"></i> حذف الكل
+                </button>
             </div>
-            <div class="filter-group">
-                <button class="filter-btn active" onclick="setFilter('all', this)">الكل</button>
-                <button class="filter-btn" onclick="setFilter('active', this)">فعال</button>
-                <button class="filter-btn" onclick="setFilter('used', this)">مستخدم</button>
-                <button class="filter-btn" onclick="setFilter('expired', this)">منتهي</button>
-                <button class="filter-btn" onclick="setFilter('disabled', this)">معطل</button>
+
+            <div class="controls">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="ابحث عن كود أو جزء منه..." oninput="handleSearch()">
+                    <i class="fa-solid fa-search"></i>
+                </div>
+                <div class="filter-group">
+                    <button class="filter-btn active" onclick="setFilter('all', this)">الكل</button>
+                    <button class="filter-btn" onclick="setFilter('active', this)">فعال</button>
+                    <button class="filter-btn" onclick="setFilter('used', this)">مستخدم</button>
+                    <button class="filter-btn" onclick="setFilter('expired', this)">منتهي</button>
+                    <button class="filter-btn" onclick="setFilter('disabled', this)">معطل</button>
+                </div>
             </div>
-        </div>
 
-        <div id="codes-container">
-            <!-- سيتم تعبئتها ديناميكياً -->
-        </div>
+            <div id="codes-container"></div>
 
-        <div class="pagination" id="pagination">
-            <button class="page-btn" onclick="changePage(-1)" id="btn-prev">السابق</button>
-            <span class="page-info" id="page-info">1 / 1</span>
-            <button class="page-btn" onclick="changePage(1)" id="btn-next">التالي</button>
+            <div class="pagination" id="pagination">
+                <button class="page-btn" onclick="changePage(-1)" id="btn-prev">السابق</button>
+                <span class="page-info" id="page-info">1 / 1</span>
+                <button class="page-btn" onclick="changePage(1)" id="btn-next">التالي</button>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- إشعار -->
-<div id="toast">
-    <i class="fa-solid fa-circle-check" id="toast-icon"></i>
-    <span id="toast-text">تم بنجاح!</span>
-</div>
-
-<!-- نافذة تأكيد -->
-<div class="modal-overlay" id="confirm-modal">
-    <div class="modal-box">
-        <h3 id="modal-title">تأكيد الإجراء</h3>
-        <p id="modal-desc">هل أنت متأكد؟</p>
-        <div class="modal-actions">
-            <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
-            <button class="btn-confirm" id="modal-confirm-btn">تأكيد</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    // ⚠️ إعدادات السيرفر الأصلية (لم يتم تغييرها) ⚠️
-    const API = "https://key-system-yn0o.onrender.com"; 
-    
-    // المتغيرات العامة
-    let allCodes = [];
-    let filteredCodes = [];
-    let currentFilter = 'all';
-    let currentSearch = '';
-    let currentPage = 1;
-    const itemsPerPage = 10;
-    let token = "";
-
-    // --- إدارة الرمز السري ---
-    function getToken() {
-        if (!token) {
-            token = prompt("أدخل الرمز السري (Admin Token):");
-            if (token) localStorage.setItem('admin_token', token);
-        }
-        return token;
-    }
-
-    window.onload = () => {
-        token = localStorage.getItem('admin_token');
-        if (token) {
-            fetchCodes();
-        } else {
-            getToken();
-            if (token) fetchCodes();
-        }
-    };
-
-    // --- الإشعارات ---
-    function showToast(msg, isError = false) {
-        const toast = document.getElementById('toast');
-        const icon = document.getElementById('toast-icon');
-        const text = document.getElementById('toast-text');
-        
-        text.innerText = msg;
-        if(isError) {
-            toast.classList.add('error');
-            icon.className = 'fa-solid fa-circle-exclamation';
-        } else {
-            toast.classList.remove('error');
-            icon.className = 'fa-solid fa-circle-check';
-        }
-        
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
-    }
-
-    // --- النافذة المنبثقة للتأكيد ---
-    function showConfirm(title, desc, onConfirm) {
-        document.getElementById('modal-title').innerText = title;
-        document.getElementById('modal-desc').innerText = desc;
-        const modal = document.getElementById('confirm-modal');
-        const btn = document.getElementById('modal-confirm-btn');
-        
-        // إزالة أي أحداث قديمة
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
-        
-        newBtn.addEventListener('click', () => {
-            closeModal();
-            onConfirm();
-        });
-        
-        modal.classList.add('show');
-    }
-
-    function closeModal() {
-        document.getElementById('confirm-modal').classList.remove('show');
-    }
-
-    // --- خيارات إضافية ---
-    function toggleAdvanced() {
-        const options = document.getElementById('advanced-options');
-        const icon = document.querySelector('.advanced-toggle i');
-        options.classList.toggle('show');
-        icon.classList.toggle('fa-chevron-down');
-        icon.classList.toggle('fa-chevron-up');
-    }
-
-    // --- جلب البيانات ---
-    asy
+    <!-- نافذة تأكيد -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal-box">
+            <h3 id="modal-title">تأكيد الإجراء</h3>
+            <p id="modal-desc">هل أنت متأكد؟</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+                <button class="btn-confirm" id="modal-confirm-btn">تأكيد</button>
+           
