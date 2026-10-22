@@ -29,39 +29,43 @@
     h1 { color: #fff; font-size: 22px; font-weight: 900; }
     h1 span { color: #e50914; }
 
+    /* قسم الدخول */
+    #login-section {
+        background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 10px;
+        border: 1px solid #333; max-width: 400px; margin: 0 auto 20px auto;
+    }
+    .input-row { display: flex; gap: 10px; }
+    input { 
+        flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #444; 
+        background: #000; color: #fff; font-size: 15px; outline: none; text-align: center; 
+    }
+    input:focus { border-color: #e50914; }
+    button { 
+        padding: 12px 20px; border-radius: 6px; border: none; 
+        background: linear-gradient(180deg, #cc0000 0%, #550000 100%); 
+        color: #fff; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.3s;
+    }
+    button:hover { background: #e50914; }
+
+    /* لوحة التحكم (مخفية في البداية) */
+    #dashboard-content { display: none; }
+
     /* بطاقات الأقسام */
     .card { 
-        background: rgba(0, 0, 0, 0.5); 
-        padding: 20px; 
-        border-radius: 10px; 
-        margin-bottom: 20px; 
-        border: 1px solid #222; 
-        text-align: right;
+        background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 10px; 
+        margin-bottom: 20px; border: 1px solid #222; text-align: right;
     }
     .card-title { color: #e50914; font-size: 16px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; display: flex; align-items: center; gap: 8px; }
 
-    /* الحقول */
-    .input-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
     .input-group { flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; }
     .input-group label { font-size: 12px; color: #aaa; font-weight: bold; }
-    
-    input, select { 
+    select { 
         width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #444; 
-        background: #000; color: #fff; font-size: 14px; outline: none; font-family: 'Cairo', sans-serif;
+        background: #000; color: #fff; font-size: 14px; outline: none;
     }
-    input:focus, select:focus { border-color: #e50914; }
 
     /* الأزرار */
-    button { 
-        width: 100%; padding: 12px; border-radius: 6px; border: none; 
-        background: linear-gradient(180deg, #cc0000 0%, #550000 100%); 
-        color: #fff; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.3s;
-        display: flex; justify-content: center; align-items: center; gap: 8px;
-    }
-    button:hover { background: #e50914; }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    
-    .btn-sm { width: auto; padding: 6px 12px; font-size: 12px; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; width: auto; }
     .btn-blue { background: #1e3a8a; border: 1px solid #3b82f6; }
     .btn-blue:hover { background: #2563eb; }
     .btn-gold { background: #854d0e; border: 1px solid #eab308; }
@@ -72,7 +76,7 @@
     /* قسم الأكواد */
     .codes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
     .search-box { flex: 1; min-width: 150px; }
-    .search-box input { padding-right: 10px; font-size: 13px; }
+    .search-box input { text-align: right; padding-right: 10px; font-size: 13px; }
     
     .key-card { 
         background: rgba(20, 20, 20, 0.8); border: 1px solid #333; border-radius: 8px; 
@@ -84,12 +88,13 @@
     .badge-active { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; }
     .badge-disabled { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
     
-    .key-info { display: flex; gap: 15px; font-size: 12px; color: #aaa; }
+    .key-info { display: flex; gap: 15px; font-size: 12px; color: #aaa; flex-wrap: wrap; }
     .key-actions { display: flex; gap: 8px; margin-top: 5px; }
     .key-actions button { flex: 1; padding: 8px; font-size: 12px; }
 
-    #status-msg { color: #22c55e; font-weight: bold; display: none; margin-bottom: 10px; text-align: center; }
-    .hidden { display: none !important; }
+    #status-msg { color: #22c55e; font-weight: bold; display: none; margin-top: 10px; text-align: center; font-size: 13px;}
+    .fa-spinner { animation: spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -101,72 +106,98 @@
         <h1>Control panel <span>Nacer_22</span></h1>
     </div>
 
-    <!-- 1. قسم كلمة المرور (في الأعلى) -->
-    <div class="card" id="auth-section">
-        <div class="card-title"><i class="fa-solid fa-lock"></i> الدخول للوحة التحكم</div>
+    <!-- 1. قسم الدخول (تحقق محلي فوري) -->
+    <div id="login-section">
         <div class="input-row">
-            <div class="input-group" style="flex: 3;">
-                <input type="password" id="tokenInput" placeholder="أدخل كلمة المرور (Admin Token)">
-            </div>
-            <div class="input-group" style="flex: 1;">
-                <button onclick="loadCodes()" id="btn-login">تحميل</button>
-            </div>
+            <input type="password" id="tokenInput" placeholder="أدخل كلمة المرور" onkeypress="handleKeyPress(event)">
+            <button onclick="login()">دخول</button>
         </div>
-        <div id="status-msg"></div>
+        <div id="login-error" style="color:#ef4444; font-size:13px; margin-top:10px; display:none;">كلمة المرور غير صحيحة!</div>
     </div>
 
-    <!-- 2. قسم إنشاء الأكواد -->
-    <div class="card hidden" id="create-section">
-        <div class="card-title"><i class="fa-solid fa-plus"></i> إنشاء مفاتيح جديدة</div>
-        <div class="input-row">
-            <div class="input-group">
-                <label>المدة</label>
-                <input type="number" id="dur" value="24" min="1">
-            </div>
-            <div class="input-group">
-                <label>الوحدة</label>
-                <select id="time_unit">
-                    <option value="hours">ساعة</option>
-                    <option value="days">يوم</option>
-                    <option value="weeks">أسبوع</option>
-                    <option value="months">شهر</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label>عدد المفاتيح</label>
-                <input type="number" id="cnt" value="1" min="1">
-            </div>
-            <div class="input-group">
-                <label>عدد الأجهزة</label>
-                <input type="number" id="dev" value="1" min="1">
-            </div>
-        </div>
-        <button onclick="createCode()" id="btn-create"><i class="fa-solid fa-plus"></i> إنشاء الأكواد الآن</button>
-    </div>
-
-    <!-- 3. قسم الأكواد المسجلة -->
-    <div class="card hidden" id="list-section">
-        <div class="card-title" style="justify-content: space-between;">
-            <span><i class="fa-solid fa-list"></i> الأكواد المسجلة</span>
-            <button class="btn-sm btn-dark" onclick="confirmDeleteAll()"><i class="fa-solid fa-trash"></i> حذف الكل</button>
-        </div>
+    <!-- 2. محتوى لوحة التحكم (مخفي حتى يتم الدخول) -->
+    <div id="dashboard-content">
         
-        <div class="search-box" style="margin-bottom: 15px;">
-            <input type="text" id="searchInput" placeholder="ابحث عن كود..." oninput="filterCodes()">
+        <!-- إنشاء الأكواد -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-plus"></i> إنشاء مفاتيح جديدة</div>
+            <div class="input-row" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+                <div class="input-group">
+                    <label>المدة</label>
+                    <input type="number" id="dur" value="24" min="1">
+                </div>
+                <div class="input-group">
+                    <label>الوحدة</label>
+                    <select id="time_unit">
+                        <option value="hours">ساعة</option>
+                        <option value="days">يوم</option>
+                        <option value="weeks">أسبوع</option>
+                        <option value="months">شهر</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>عدد المفاتيح</label>
+                    <input type="number" id="cnt" value="1" min="1">
+                </div>
+                <div class="input-group">
+                    <label>عدد الأجهزة</label>
+                    <input type="number" id="dev" value="1" min="1">
+                </div>
+            </div>
+            <button onclick="createCode()" id="btn-create" style="width:100%;"><i class="fa-solid fa-plus"></i> إنشاء الأكواد الآن</button>
         </div>
 
-        <div id="codes-container">
-            <!-- سيتم تعبئتها بالجافاسكريبت -->
+        <!-- قائمة الأكواد -->
+        <div class="card">
+            <div class="card-title" style="justify-content: space-between;">
+                <span><i class="fa-solid fa-list"></i> الأكواد المسجلة</span>
+                <button class="btn-sm btn-dark" onclick="confirmDeleteAll()"><i class="fa-solid fa-trash"></i> حذف الكل</button>
+            </div>
+            
+            <div class="search-box" style="margin-bottom: 15px;">
+                <input type="text" id="searchInput" placeholder="ابحث عن كود..." oninput="filterCodes()">
+            </div>
+
+            <div id="codes-container">
+                <!-- سيتم تعبئتها بالجافاسكريبت -->
+            </div>
         </div>
+
+        <div id="status-msg"></div>
     </div>
 </div>
 
 <script>
     const API = "https://key-system-yn0o.onrender.com"; 
+    const SECRET_PASSWORD = "Nacer_Nacer_22"; // كلمة المرور الثابتة
+    let adminToken = ""; // سيتم استخدامها لاحقاً لجلب الأكواد
     let allCodes = [];
-    let token = "";
 
-    // دالة إظهار رسائل الحالة
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') login();
+    }
+
+    // دالة الدخول (تحقق محلي فوري بدون سيرفر)
+    function login() {
+        const inputVal = document.getElementById('tokenInput').value.trim();
+        const errorMsg = document.getElementById('login-error');
+
+        if (inputVal === SECRET_PASSWORD) {
+            errorMsg.style.display = 'none';
+            adminToken = inputVal;
+            
+            // إخفاء شاشة الدخول وإظهار لوحة التحكم فوراً
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('dashboard-content').style.display = 'block';
+            
+            // بدء جلب الأكواد من السيرفر في الخلفية
+            fetchCodes();
+        } else {
+            errorMsg.style.display = 'block';
+        }
+    }
+
+    // إظهار رسائل الحالة (نجاح/خطأ)
     function showMsg(msg, isError = false) {
         const status = document.getElementById('status-msg');
         status.innerText = msg;
@@ -175,45 +206,19 @@
         setTimeout(() => { status.style.display = 'none'; }, 4000);
     }
 
-    // جلب الأكواد (تستخدم للتحقق من كلمة المرور أيضاً)
-    async function loadCodes() {
-        token = document.getElementById('tokenInput').value.trim();
-        const btn = document.getElementById('btn-login');
-        
-        if(!token) {
-            showMsg("يرجى إدخال كلمة المرور أولاً", true);
-            return;
-        }
-
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
+    // جلب الأكواد من السيرفر
+    async function fetchCodes() {
         try {
             const res = await fetch(`${API}/api/admin/codes`, { 
-                headers: {'x-admin-token': token} 
+                headers: {'x-admin-token': adminToken} 
             });
             
-            if(res.status === 403) {
-                showMsg("كلمة المرور غير صحيحة!", true);
-                btn.disabled = false;
-                btn.innerHTML = 'تحميل';
-                return;
+            if(res.ok) {
+                allCodes = await res.json();
+                renderCodes(allCodes);
             }
-            
-            allCodes = await res.json();
-            
-            // إخفاء شاشة الدخول وإظهار الأقسام
-            document.getElementById('auth-section').classList.add('hidden');
-            document.getElementById('create-section').classList.remove('hidden');
-            document.getElementById('list-section').classList.remove('hidden');
-            
-            renderCodes(allCodes);
-            showMsg("تم الدخول وتحميل البيانات بنجاح");
-
         } catch(err) {
-            showMsg("تعذر الاتصال بالسيرفر (قد يكون نائماً، انتظر 30 ثانية).", true);
-            btn.disabled = false;
-            btn.innerHTML = 'تحميل';
+            showMsg("تعذر جلب البيانات (السيرفر قد يكون نائماً، انتظر 30 ثانية).", true);
         }
     }
 
@@ -255,14 +260,14 @@
         });
     }
 
-    // البحث
+    // فلترة البحث
     function filterCodes() {
         const term = document.getElementById('searchInput').value.toLowerCase();
         const filtered = allCodes.filter(c => c.code.toLowerCase().includes(term));
         renderCodes(filtered);
     }
 
-    // إنشاء كود
+    // إنشاء كود جديد
     async function createCode() {
         const btn = document.getElementById('btn-create');
         const originalHTML = btn.innerHTML;
@@ -287,14 +292,14 @@
         try {
             const res = await fetch(`${API}/api/admin/codes`, { 
                 method: 'POST', 
-                headers: {'Content-Type': 'application/json', 'x-admin-token': token}, 
+                headers: {'Content-Type': 'application/json', 'x-admin-token': adminToken}, 
                 body: JSON.stringify({ duration_hours: hours, max_devices: devices, count: count }) 
             });
             
             if(res.ok) {
                 showMsg(`تم إنشاء ${count} مفاتيح بنجاح`);
                 document.getElementById('cnt').value = "1";
-                loadCodes(); // تحديث القائمة
+                fetchCodes(); // تحديث القائمة
             } else {
                 showMsg("حدث خطأ أثناء الإنشاء", true);
             }
@@ -313,12 +318,12 @@
         });
     }
 
-    // حذف كود
+    // حذف كود واحد
     async function deleteCode(id) {
         if(!confirm("هل أنت متأكد من حذف هذا الكود؟")) return;
         try {
-            await fetch(`${API}/api/admin/codes/${id}`, { method: 'DELETE', headers: {'x-admin-token': token} });
-            loadCodes();
+            await fetch(`${API}/api/admin/codes/${id}`, { method: 'DELETE', headers: {'x-admin-token': adminToken} });
+            fetchCodes();
         } catch(e) { showMsg("حدث خطأ", true); }
     }
 
@@ -326,7 +331,7 @@
     async function resetDevice(id) {
         if(!confirm("هل أنت متأكد من إعادة تعيين هذا المفتاح (فصل الأجهزة)؟")) return;
         try {
-            await fetch(`${API}/api/admin/codes/${id}/reset`, { method: 'DELETE', headers: {'x-admin-token': token} });
+            await fetch(`${API}/api/admin/codes/${id}/reset`, { method: 'DELETE', headers: {'x-admin-token': adminToken} });
             showMsg("تم إعادة التعيين بنجاح");
         } catch(e) { showMsg("حدث خطأ", true); }
     }
@@ -335,13 +340,13 @@
     async function confirmDeleteAll() {
         if(!confirm("تحذير: سيتم حذف جميع الأكواد نهائياً! هل أنت متأكد؟")) return;
         try {
-            const res = await fetch(`${API}/api/admin/codes`, { headers: {'x-admin-token': token} });
+            const res = await fetch(`${API}/api/admin/codes`, { headers: {'x-admin-token': adminToken} });
             const rows = await res.json();
             for (let c of rows) {
-                await fetch(`${API}/api/admin/codes/${c.id}`, { method: 'DELETE', headers: {'x-admin-token': token} });
+                await fetch(`${API}/api/admin/codes/${c.id}`, { method: 'DELETE', headers: {'x-admin-token': adminToken} });
             }
             showMsg("تم حذف جميع الأكواد");
-            loadCodes();
+            fetchCodes();
         } catch(e) { showMsg("حدث خطأ أثناء الحذف", true); }
     }
 </script>
