@@ -33,14 +33,14 @@
         font-size: 14px; line-height: 1.5;
     }
 
-    /* ---------------- نافذة تسجيل الدخول ---------------- */
+    /* نافذة تسجيل الدخول */
     .login-modal {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+        background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(8px);
         display: flex; justify-content: center; align-items: center;
         z-index: 2000; transition: opacity 0.3s;
     }
-    .login-modal.hidden { opacity: 0; pointer-events: none; }
+    .login-modal.hidden { display: none; }
     
     .login-box {
         background: linear-gradient(145deg, #1a0505, #0a0000);
@@ -67,10 +67,10 @@
     .login-input-group i { color: var(--primary-red); margin-left: 10px; }
     .login-input-group input { flex: 1; background: transparent; border: none; color: #fff; padding: 12px 0; outline: none; font-size: 16px; text-align: center; letter-spacing: 2px; }
     
-    .login-error { color: var(--error); font-size: 13px; font-weight: bold; margin-bottom: 15px; display: none; line-height: 1.4; }
+    .login-error { color: var(--error); font-size: 13px; font-weight: bold; margin-bottom: 15px; display: none; }
     .login-error.show { display: block; }
 
-    /* ---------------- لوحة التحكم الأساسية ---------------- */
+    /* لوحة التحكم */
     .container { 
         width: 100%; max-width: 900px; 
         background: var(--card-bg); 
@@ -79,7 +79,7 @@
         border-radius: 16px; 
         border: 1px solid var(--border-color); 
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(229, 9, 20, 0.05);
-        display: none; /* مخفي حتى يتم تسجيل الدخول */
+        display: none;
     }
     .container.show { display: block; animation: fadeIn 0.5s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -92,7 +92,6 @@
     h1 { color: var(--text-main); font-size: 24px; font-weight: 900; letter-spacing: 1px; text-align: center;}
     h1 span { color: var(--primary-red); text-shadow: 0 0 10px rgba(229, 9, 20, 0.5); }
 
-    /* بطاقات الإحصائيات */
     .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 25px; }
     @media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
     .stat-card { background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
@@ -104,7 +103,6 @@
     .stat-card.used i { color: var(--info); }
     .stat-card.expired i { color: var(--error); }
 
-    /* قسم الإنشاء والقائمة */
     .section-card { background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.05); }
     .section-title { font-size: 18px; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: #fff; border-bottom: 1px solid rgba(229, 9, 20, 0.2); padding-bottom: 10px; }
     .section-title i { color: var(--primary-red); }
@@ -132,7 +130,6 @@
     button:active:not(:disabled) { transform: translateY(0); }
     button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    /* القائمة */
     .list-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; }
     @media (min-width: 600px) { .list-header { flex-direction: row; justify-content: space-between; align-items: center; } }
     .controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
@@ -203,7 +200,7 @@
                 <input type="password" id="tokenInput" placeholder="أدخل كلمة المرور" onkeypress="handleKeyPress(event)">
             </div>
             
-            <div class="login-error" id="login-error">كلمة المرور غير صحيحة أو السيرفر يستغرق وقتاً للاستيقاظ.</div>
+            <div class="login-error" id="login-error">كلمة المرور غير صحيحة!</div>
             
             <button onclick="login()" id="btn-login">
                 <i class="fa-solid fa-right-to-bracket"></i> دخول
@@ -325,4 +322,12 @@
             <p id="modal-desc">هل أنت متأكد؟</p>
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
-           
+                <button class="btn-confirm" id="modal-confirm-btn">تأكيد</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast">
+        <i class="fa-solid fa-circle-check" id="toast-icon"></i>
+        <span id="toast-text">تم بنجاح!</span>
+    </di
