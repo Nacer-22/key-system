@@ -407,4 +407,155 @@
     }
 </script>
 </body>
+</html>e.display = 'block';
+            document.getElementById('table-section').style.display = 'block';
+            
+            renderTable(rows);
+            showToast("تم تحميل الأكواد بنجاح");
+        } catch(err) {
+            showToast("خطأ في الاتصال بالسيرفر", true);
+        } finally {
+            setLoading('btn-load', false);
+        }
+    }
+
+    // عرض الجدول
+    function renderTable(rows) {
+        const tbody = document.getElementById('tbody');
+        tbody.innerHTML = '';
+        
+        if(rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="color:#888;">لا توجد أكواد حالياً</td></tr>';
+            return;
+        }
+
+        rows.forEach(c => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>#${c.id}</td>
+                <td class="code-cell">${c.code}</td>
+                <td>${formatDuration(c.duration_hours)}</td>
+                <td style="color:${c.is_active ? '#22c55e' : '#e50914'}; font-weight: bold;">
+                    ${c.is_active ? 'مفعل' : 'معطل'}
+                </td>
+                <td>
+                    <div class="action-group">
+                        <button class="action-btn btn-copy" onclick="copyCode('${c.code}')" title="نسخ">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                        <button class="action-btn btn-reset" onclick="resetDevice(${c.id})" title="إعادة تعيين الأجهزة">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                        <button class="action-btn btn-del" onclick="del(${c.id})" title="حذف">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // نسخ الكود
+    function copyCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            showToast("تم نسخ الكود: " + code);
+        });
+    }
+
+    // إنشاء كود (مع التحويل بين الساعات والدقائق)
+    async function createCode() {
+        setLoading('btn-create', true);
+        
+        const durationValue = +document.getElementById('dur').value;
+        const timeUnit = document.getElementById('time_unit').value;
+        
+        // تحويل الدقائق إلى ساعات للـ API
+        let durationInHours = durationValue;
+        if (timeUnit === 'minutes') {
+            durationInHours = durationValue / 60;
+        }
+
+        const body = { 
+            duration_hours: durationInHours, // السيرفر يفهم الكسور (0.5 = 30 دقيقة)
+            max_devices: +document.getElementById('dev').value, 
+            count: +document.getElementById('cnt').value 
+        };
+        
+        try {
+            const r = await fetch(API + '/api/admin/codes', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json', 'x-admin-token': tk()}, 
+                body: JSON.stringify(body) 
+            });
+            
+            if(r.ok) {
+                showToast("تم إنشاء الأكواد بنجاح");
+                loadCodes();
+            } else {
+                showToast("حدث خطأ أثناء الإنشاء", true);
+            }
+        } catch(err) {
+            showToast("خطأ في الاتصال", true);
+        } finally {
+            setLoading('btn-create', false);
+        }
+    }
+
+    // إعادة تعيين الجهاز
+    async function resetDevice(id) {
+        if(!confirm("هل أنت متأكد من إعادة تعيين هذا المفتاح؟ سيتم فصل الأجهزة المرتبطة به.")) return;
+        
+        try {
+            const r = await fetch(API + '/api/admin/codes/' + id + '/reset', { 
+                method: 'DELETE', 
+                headers: {'x-admin-token': tk()} 
+            });
+            if(r.ok) {
+                showToast("تم إعادة تعيين المفتاح بنجاح");
+                loadCodes();
+            }
+        } catch(err) {
+            showToast("حدث خطأ", true);
+        }
+    }
+
+    // حذف كود فردي
+    async function del(id) {
+        if(!confirm("هل أنت متأكد من حذف هذا الكود نهائياً؟")) return;
+        
+        try {
+            await fetch(API + '/api/admin/codes/' + id, { 
+                method: 'DELETE', 
+                headers: {'x-admin-token': tk()} 
+            });
+            showToast("تم حذف الكود");
+            loadCodes();
+        } catch(err) {
+            showToast("حدث خطأ", true);
+        }
+    }
+
+    // حذف كل الأكواد
+    async function deleteAllCodes() {
+        if(!confirm("تحذير: سيتم حذف جميع الأكواد نهائياً! هل أنت متأكد؟")) return;
+        
+        try {
+            const r = await fetch(API + '/api/admin/codes', { headers: {'x-admin-token': tk()} });
+            const rows = await r.json();
+            
+            for (let c of rows) {
+                await fetch(API + '/api/admin/codes/' + c.id, { 
+                    method: 'DELETE', 
+                    headers: {'x-admin-token': tk()} 
+                });
+            }
+            showToast("تم حذف جميع الأكواد");
+            loadCodes();
+        } catch (err) {
+            showToast("حدث خطأ أثناء الحذف", true);
+        }
+    }
+</script>
+</body>
 </html>
