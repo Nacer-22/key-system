@@ -1,395 +1,349 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html dir="rtl" lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - Dashboard</title>
-    <!-- استدعاء خط عربي جميل وأيقونات -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Control panel Nacer_22</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+    body { 
+        background-color: #050000; 
+        background-image: radial-gradient(circle at 50% 0%, rgba(139, 0, 0, 0.2) 0%, transparent 60%);
+        color: #fff; display: flex; justify-content: center; padding: 20px 15px; min-height: 100vh;
+    }
+    .container { 
+        width: 100%; max-width: 800px; 
+        background: rgba(15, 5, 5, 0.9); 
+        padding: 25px 20px; 
+        border-radius: 12px; 
+        border: 1px solid #e50914; 
+        text-align: center;
+        box-shadow: 0 0 20px rgba(229, 9, 20, 0.15);
+    }
     
-    <style>
-        /* إعدادات عامة */
-        :root {
-            --bg-color: #f4f7f6;
-            --sidebar-bg: #2c3e50;
-            --sidebar-hover: #34495e;
-            --text-color: #333;
-            --primary-color: #3498db;
-            --success-color: #2ecc71;
-            --danger-color: #e74c3c;
-            --card-bg: #ffffff;
-        }
+    /* ترويسة */
+    .header { margin-bottom: 25px; }
+    img.logo { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #e50914; object-fit: cover; margin-bottom: 10px; }
+    h1 { color: #fff; font-size: 22px; font-weight: 900; }
+    h1 span { color: #e50914; }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Cairo', sans-serif;
-        }
+    /* بطاقات الأقسام */
+    .card { 
+        background: rgba(0, 0, 0, 0.5); 
+        padding: 20px; 
+        border-radius: 10px; 
+        margin-bottom: 20px; 
+        border: 1px solid #222; 
+        text-align: right;
+    }
+    .card-title { color: #e50914; font-size: 16px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; display: flex; align-items: center; gap: 8px; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            min-height: 100vh;
-        }
+    /* الحقول */
+    .input-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .input-group { flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; }
+    .input-group label { font-size: 12px; color: #aaa; font-weight: bold; }
+    
+    input, select { 
+        width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #444; 
+        background: #000; color: #fff; font-size: 14px; outline: none; font-family: 'Cairo', sans-serif;
+    }
+    input:focus, select:focus { border-color: #e50914; }
 
-        /* --- القائمة الجانبية (Sidebar) --- */
-        .sidebar {
-            width: 250px;
-            background-color: var(--sidebar-bg);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s;
-        }
+    /* الأزرار */
+    button { 
+        width: 100%; padding: 12px; border-radius: 6px; border: none; 
+        background: linear-gradient(180deg, #cc0000 0%, #550000 100%); 
+        color: #fff; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.3s;
+        display: flex; justify-content: center; align-items: center; gap: 8px;
+    }
+    button:hover { background: #e50914; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    .btn-sm { width: auto; padding: 6px 12px; font-size: 12px; }
+    .btn-blue { background: #1e3a8a; border: 1px solid #3b82f6; }
+    .btn-blue:hover { background: #2563eb; }
+    .btn-gold { background: #854d0e; border: 1px solid #eab308; }
+    .btn-gold:hover { background: #ca8a04; }
+    .btn-dark { background: #333; border: 1px solid #555; }
+    .btn-dark:hover { background: #444; }
 
-        .sidebar .logo {
-            padding: 20px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
+    /* قسم الأكواد */
+    .codes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+    .search-box { flex: 1; min-width: 150px; }
+    .search-box input { padding-right: 10px; font-size: 13px; }
+    
+    .key-card { 
+        background: rgba(20, 20, 20, 0.8); border: 1px solid #333; border-radius: 8px; 
+        padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .key-header { display: flex; justify-content: space-between; align-items: center; }
+    .key-code { font-family: monospace; font-size: 16px; color: #ffcc00; font-weight: bold; }
+    .key-badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+    .badge-active { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; }
+    .badge-disabled { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+    
+    .key-info { display: flex; gap: 15px; font-size: 12px; color: #aaa; }
+    .key-actions { display: flex; gap: 8px; margin-top: 5px; }
+    .key-actions button { flex: 1; padding: 8px; font-size: 12px; }
 
-        .sidebar ul {
-            list-style: none;
-            padding: 20px 0;
-        }
-
-        .sidebar ul li a {
-            display: block;
-            padding: 15px 20px;
-            color: #bdc3c7;
-            text-decoration: none;
-            transition: 0.3s;
-        }
-
-        .sidebar ul li a i {
-            margin-left: 10px;
-            width: 20px;
-        }
-
-        .sidebar ul li a:hover, .sidebar ul li a.active {
-            background-color: var(--sidebar-hover);
-            color: white;
-            border-right: 4px solid var(--primary-color);
-        }
-
-        /* --- المحتوى الرئيسي (Main Content) --- */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* الشريط العلوي (Topbar) */
-        .topbar {
-            background-color: var(--card-bg);
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .topbar h1 {
-            font-size: 20px;
-            color: var(--sidebar-bg);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
-        }
-
-        /* منطقة المحتوى */
-        .content-area {
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-        }
-
-        /* البطاقات الإحصائية (Stats Cards) */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .stat-card {
-            background-color: var(--card-bg);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .stat-card h3 {
-            font-size: 16px;
-            color: #7f8c8d;
-            margin-bottom: 5px;
-        }
-
-        .stat-card p {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--sidebar-bg);
-        }
-
-        .stat-icon {
-            font-size: 40px;
-            color: var(--primary-color);
-            opacity: 0.8;
-        }
-
-        /* منطقة الجدول */
-        .table-container {
-            background-color: var(--card-bg);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            overflow-x: auto;
-        }
-
-        .table-container h2 {
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: var(--sidebar-bg);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: right;
-        }
-
-        table th, table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-        }
-
-        table th {
-            background-color: #f8f9fa;
-            color: #555;
-            font-weight: 600;
-        }
-
-        table tr:hover {
-            background-color: #f1f1f1;
-        }
-
-        /* الأزرار */
-        .btn {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: 600;
-            color: white;
-            transition: 0.3s;
-        }
-
-        .btn-primary { background-color: var(--primary-color); }
-        .btn-primary:hover { background-color: #2980b9; }
-        .btn-success { background-color: var(--success-color); }
-        .btn-success:hover { background-color: #27ae60; }
-        .btn-danger { background-color: var(--danger-color); }
-        .btn-danger:hover { background-color: #c0392b; }
-
-        /* نافذة تسجيل الدخول (Modal) - لحل مشكلتك السابقة */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: none; /* مخفية افتراضياً */
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            width: 350px;
-            text-align: center;
-        }
-
-        .modal-content h2 { margin-bottom: 20px; color: var(--sidebar-bg); }
-        
-        .modal-content input {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-family: inherit;
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 10px; left: 15px;
-            font-size: 20px;
-            cursor: pointer;
-            color: #aaa;
-        }
-    </style>
+    #status-msg { color: #22c55e; font-weight: bold; display: none; margin-bottom: 10px; text-align: center; }
+    .hidden { display: none !important; }
+</style>
 </head>
 <body>
 
-    <!-- القائمة الجانبية -->
-    <aside class="sidebar">
-        <div class="logo"><i class="fas fa-cube"></i> لوحتي</div>
-        <ul>
-            <li><a href="#" class="active"><i class="fas fa-home"></i> الرئيسية</a></li>
-            <li><a href="#"><i class="fas fa-users"></i> المستخدمين</a></li>
-            <li><a href="#"><i class="fas fa-chart-line"></i> الإحصائيات</a></li>
-            <li><a href="#"><i class="fas fa-cog"></i> الإعدادات</a></li>
-            <li><a href="#" onclick="openLogin()"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</a></li>
-        </ul>
-    </aside>
+<div class="container">
+    <!-- الترويسة -->
+    <div class="header">
+        <img src="https://i.imgur.com/kf1AmpO.png" alt="Logo" class="logo">
+        <h1>Control panel <span>Nacer_22</span></h1>
+    </div>
 
-    <!-- المحتوى الرئيسي -->
-    <div class="main-content">
+    <!-- 1. قسم كلمة المرور (في الأعلى) -->
+    <div class="card" id="auth-section">
+        <div class="card-title"><i class="fa-solid fa-lock"></i> الدخول للوحة التحكم</div>
+        <div class="input-row">
+            <div class="input-group" style="flex: 3;">
+                <input type="password" id="tokenInput" placeholder="أدخل كلمة المرور (Admin Token)">
+            </div>
+            <div class="input-group" style="flex: 1;">
+                <button onclick="loadCodes()" id="btn-login">تحميل</button>
+            </div>
+        </div>
+        <div id="status-msg"></div>
+    </div>
+
+    <!-- 2. قسم إنشاء الأكواد -->
+    <div class="card hidden" id="create-section">
+        <div class="card-title"><i class="fa-solid fa-plus"></i> إنشاء مفاتيح جديدة</div>
+        <div class="input-row">
+            <div class="input-group">
+                <label>المدة</label>
+                <input type="number" id="dur" value="24" min="1">
+            </div>
+            <div class="input-group">
+                <label>الوحدة</label>
+                <select id="time_unit">
+                    <option value="hours">ساعة</option>
+                    <option value="days">يوم</option>
+                    <option value="weeks">أسبوع</option>
+                    <option value="months">شهر</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>عدد المفاتيح</label>
+                <input type="number" id="cnt" value="1" min="1">
+            </div>
+            <div class="input-group">
+                <label>عدد الأجهزة</label>
+                <input type="number" id="dev" value="1" min="1">
+            </div>
+        </div>
+        <button onclick="createCode()" id="btn-create"><i class="fa-solid fa-plus"></i> إنشاء الأكواد الآن</button>
+    </div>
+
+    <!-- 3. قسم الأكواد المسجلة -->
+    <div class="card hidden" id="list-section">
+        <div class="card-title" style="justify-content: space-between;">
+            <span><i class="fa-solid fa-list"></i> الأكواد المسجلة</span>
+            <button class="btn-sm btn-dark" onclick="confirmDeleteAll()"><i class="fa-solid fa-trash"></i> حذف الكل</button>
+        </div>
         
-        <!-- الشريط العلوي -->
-        <header class="topbar">
-            <h1>لوحة التحكم الرئيسية</h1>
-            <div class="user-info">
-                <i class="fas fa-user-circle fa-2x" style="color: var(--primary-color);"></i>
-                <span>مرحباً، المدير</span>
-            </div>
-        </header>
+        <div class="search-box" style="margin-bottom: 15px;">
+            <input type="text" id="searchInput" placeholder="ابحث عن كود..." oninput="filterCodes()">
+        </div>
 
-        <!-- منطقة المحتوى -->
-        <div class="content-area">
+        <div id="codes-container">
+            <!-- سيتم تعبئتها بالجافاسكريبت -->
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = "https://key-system-yn0o.onrender.com"; 
+    let allCodes = [];
+    let token = "";
+
+    // دالة إظهار رسائل الحالة
+    function showMsg(msg, isError = false) {
+        const status = document.getElementById('status-msg');
+        status.innerText = msg;
+        status.style.color = isError ? "#ef4444" : "#22c55e";
+        status.style.display = 'block';
+        setTimeout(() => { status.style.display = 'none'; }, 4000);
+    }
+
+    // جلب الأكواد (تستخدم للتحقق من كلمة المرور أيضاً)
+    async function loadCodes() {
+        token = document.getElementById('tokenInput').value.trim();
+        const btn = document.getElementById('btn-login');
+        
+        if(!token) {
+            showMsg("يرجى إدخال كلمة المرور أولاً", true);
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        try {
+            const res = await fetch(`${API}/api/admin/codes`, { 
+                headers: {'x-admin-token': token} 
+            });
             
-            <!-- البطاقات الإحصائية -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div>
-                        <h3>إجمالي المستخدمين</h3>
-                        <p>1,250</p>
-                    </div>
-                    <i class="fas fa-users stat-icon"></i>
-                </div>
-                <div class="stat-card">
-                    <div>
-                        <h3>المبيعات اليوم</h3>
-                        <p>$4,500</p>
-                    </div>
-                    <i class="fas fa-shopping-cart stat-icon" style="color: var(--success-color);"></i>
-                </div>
-                <div class="stat-card">
-                    <div>
-                        <h3>الزيارات</h3>
-                        <p>8,420</p>
-                    </div>
-                    <i class="fas fa-eye stat-icon" style="color: #f39c12;"></i>
-                </div>
-            </div>
-
-            <!-- الجدول -->
-            <div class="table-container">
-                <h2>أحدث المستخدمين المسجلين</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>الاسم</th>
-                            <th>البريد الإلكتروني</th>
-                            <th>الحالة</th>
-                            <th>إجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>أحمد محمد</td>
-                            <td>ahmed@example.com</td>
-                            <td><span style="color: var(--success-color);">نشط</span></td>
-                            <td>
-                                <button class="btn btn-primary" onclick="alert('تعديل')">تعديل</button>
-                                <button class="btn btn-danger" onclick="alert('حذف')">حذف</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>سارة علي</td>
-                            <td>sara@example.com</td>
-                            <td><span style="color: var(--danger-color);">غير نشط</span></td>
-                            <td>
-                                <button class="btn btn-primary" onclick="alert('تعديل')">تعديل</button>
-                                <button class="btn btn-danger" onclick="alert('حذف')">حذف</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- نافذة تسجيل الدخول المنبثقة (لحل مشكلة الخطأ السابق) -->
-    <div class="modal-overlay" id="loginModal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeLogin()">&times;</span>
-            <h2><i class="fas fa-lock"></i> تسجيل الدخول</h2>
-            <input type="text" id="username" placeholder="اسم المستخدم">
-            <input type="password" id="password" placeholder="كلمة المرور">
-            <button class="btn btn-success" style="width: 100%;" onclick="login()">دخول النظام</button>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- أكواد الجافاسكريبت (JavaScript) الخاصة بك -->
-    <!-- ========================================== -->
-    <script>
-        // 1. دالة فتح وإغلاق نافذة تسجيل الدخول
-        function openLogin() {
-            document.getElementById("loginModal").style.display = "flex";
-        }
-
-        function closeLogin() {
-            document.getElementById("loginModal").style.display = "none";
-        }
-
-        // 2. الدالة التي كانت تسبب لك المشكلة (تم حلها هنا)
-        // تم تعريفها بشكل عام (Global) لكي يتعرف عليها زر الـ HTML
-        function login() {
-            var user = document.getElementById("username").value;
-            var pass = document.getElementById("password").value;
-
-            if (user === "" || pass === "") {
-                alert("الرجاء إدخال اسم المستخدم وكلمة المرور!");
+            if(res.status === 403) {
+                showMsg("كلمة المرور غير صحيحة!", true);
+                btn.disabled = false;
+                btn.innerHTML = 'تحميل';
                 return;
             }
+            
+            allCodes = await res.json();
+            
+            // إخفاء شاشة الدخول وإظهار الأقسام
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('create-section').classList.remove('hidden');
+            document.getElementById('list-section').classList.remove('hidden');
+            
+            renderCodes(allCodes);
+            showMsg("تم الدخول وتحميل البيانات بنجاح");
 
-            // هنا يمكنك وضع كود التحقق الخاص بك (مثلاً جلب بيانات من قاعدة البيانات)
-            if (user === "admin" && pass === "1234") {
-                alert("تم تسجيل الدخول بنجاح! أهلاً بك.");
-                closeLogin();
-                // window.location.href = "dashboard.html"; // إذا أردت تحويله لصفحة أخرى
+        } catch(err) {
+            showMsg("تعذر الاتصال بالسيرفر (قد يكون نائماً، انتظر 30 ثانية).", true);
+            btn.disabled = false;
+            btn.innerHTML = 'تحميل';
+        }
+    }
+
+    // عرض الأكواد
+    function renderCodes(codesToRender) {
+        const container = document.getElementById('codes-container');
+        container.innerHTML = '';
+
+        if (codesToRender.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">لا توجد أكواد حالياً</div>';
+            return;
+        }
+
+        codesToRender.forEach(c => {
+            let durationText = c.duration_hours >= 1 ? `${c.duration_hours} ساعة` : `${Math.round(c.duration_hours * 60)} دقيقة`;
+            let isActive = c.is_active === 1;
+            let badgeClass = isActive ? 'badge-active' : 'badge-disabled';
+            let badgeText = isActive ? 'مفعل' : 'معطل';
+
+            const card = document.createElement('div');
+            card.className = 'key-card';
+            card.innerHTML = `
+                <div class="key-header">
+                    <div class="key-code">${c.code}</div>
+                    <div class="key-badge ${badgeClass}">${badgeText}</div>
+                </div>
+                <div class="key-info">
+                    <span><i class="fa-regular fa-clock"></i> ${durationText}</span>
+                    <span><i class="fa-solid fa-mobile-screen"></i> أجهزة: ${c.max_devices}</span>
+                    <span><i class="fa-solid fa-users"></i> مستخدم: ${c.used}</span>
+                </div>
+                <div class="key-actions">
+                    <button class="btn-blue" onclick="copyCode('${c.code}')"><i class="fa-regular fa-copy"></i> نسخ</button>
+                    <button class="btn-gold" onclick="resetDevice(${c.id})"><i class="fa-solid fa-rotate-right"></i> ريسيت</button>
+                    <button class="btn-dark" style="background:#7f1d1d; border-color:#ef4444;" onclick="deleteCode(${c.id})"><i class="fa-solid fa-trash"></i> حذف</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // البحث
+    function filterCodes() {
+        const term = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allCodes.filter(c => c.code.toLowerCase().includes(term));
+        renderCodes(filtered);
+    }
+
+    // إنشاء كود
+    async function createCode() {
+        const btn = document.getElementById('btn-create');
+        const originalHTML = btn.innerHTML;
+        
+        const dur = +document.getElementById('dur').value;
+        const unit = document.getElementById('time_unit').value;
+        const count = +document.getElementById('cnt').value;
+        const devices = +document.getElementById('dev').value;
+
+        if(dur <= 0 || count <= 0 || devices <= 0) {
+            return showMsg("يرجى إدخال قيم صحيحة أكبر من صفر", true);
+        }
+
+        let hours = dur;
+        if (unit === 'days') hours *= 24;
+        if (unit === 'weeks') hours *= 168;
+        if (unit === 'months') hours *= 720;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإنشاء...';
+
+        try {
+            const res = await fetch(`${API}/api/admin/codes`, { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json', 'x-admin-token': token}, 
+                body: JSON.stringify({ duration_hours: hours, max_devices: devices, count: count }) 
+            });
+            
+            if(res.ok) {
+                showMsg(`تم إنشاء ${count} مفاتيح بنجاح`);
+                document.getElementById('cnt').value = "1";
+                loadCodes(); // تحديث القائمة
             } else {
-                alert("اسم المستخدم أو كلمة المرور غير صحيحة! (جرب admin و 1234)");
+                showMsg("حدث خطأ أثناء الإنشاء", true);
             }
+        } catch(err) {
+            showMsg("تعذر الاتصال بالسيرفر", true);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
         }
+    }
 
-        // 3. إغلاق النافذة عند النقر خارجها
-        window.onclick = function(event) {
-            var modal = document.getElementById("loginModal");
-            if (event.target == modal) {
-                closeLogin();
+    // نسخ الكود
+    function copyCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            showMsg("تم نسخ الكود: " + code);
+        });
+    }
+
+    // حذف كود
+    async function deleteCode(id) {
+        if(!confirm("هل أنت متأكد من حذف هذا الكود؟")) return;
+        try {
+            await fetch(`${API}/api/admin/codes/${id}`, { method: 'DELETE', headers: {'x-admin-token': token} });
+            loadCodes();
+        } catch(e) { showMsg("حدث خطأ", true); }
+    }
+
+    // إعادة تعيين الأجهزة
+    async function resetDevice(id) {
+        if(!confirm("هل أنت متأكد من إعادة تعيين هذا المفتاح (فصل الأجهزة)؟")) return;
+        try {
+            await fetch(`${API}/api/admin/codes/${id}/reset`, { method: 'DELETE', headers: {'x-admin-token': token} });
+            showMsg("تم إعادة التعيين بنجاح");
+        } catch(e) { showMsg("حدث خطأ", true); }
+    }
+
+    // حذف الكل
+    async function confirmDeleteAll() {
+        if(!confirm("تحذير: سيتم حذف جميع الأكواد نهائياً! هل أنت متأكد؟")) return;
+        try {
+            const res = await fetch(`${API}/api/admin/codes`, { headers: {'x-admin-token': token} });
+            const rows = await res.json();
+            for (let c of rows) {
+                await fetch(`${API}/api/admin/codes/${c.id}`, { method: 'DELETE', headers: {'x-admin-token': token} });
             }
-        }
-    </script>
+            showMsg("تم حذف جميع الأكواد");
+            loadCodes();
+        } catch(e) { showMsg("حدث خطأ أثناء الحذف", true); }
+    }
+</script>
 </body>
 </html>
