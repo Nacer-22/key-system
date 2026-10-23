@@ -2,18 +2,19 @@ const express = require('express');
 const Database = require('better-sqlite3');
 const crypto = require('crypto');
 const cors = require('cors');
-const rateLimit = require('express-rate-limit'); // مكتبة الحماية
+const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken'); // إضافة جديدة
 const app = express();
 const db = new Database('keys.db');
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.')); 
+app.use(express.static('.'));
 
-// --- إعداد الحماية (Rate Limiting) لمنع تخمين الأكواد ---
+// --- إعداد الحماية (Rate Limiting) ---
 const verifyLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 دقيقة
-    max: 15, // 15 محاولة كحد أقصى لكل IP
+    windowMs: 15 * 60 * 1000,
+    max: 15,
     message: { valid: false, reason: "too_many_requests" }
 });
 
@@ -39,21 +40,44 @@ CREATE TABLE IF NOT EXISTS activations (
 );
 `);
 
-const ADMIN_TOKEN = "Nacer_Nacer_22"; 
+// --- إعدادات المصادقة الآمنة ---
+// سيتم قراءتها من Environment Variables على Render
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 
+if (!ADMIN_PASSWORD) {
+    console.warn("⚠️ تحذير: لم يتم تعيين كلمة مرور الإدارة في متغيرات البيئة (ADMIN_PASSWORD).");
+}
+
+// مسار تسجيل الدخول (يتحقق من كلمة المرور ويعطي توكن)
+app.post('/api/admin/login', (req, res) => {
+    const { password } = req.body;
+    
+    if (!password || password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ error: "Unauthorized", message: "كلمة المرور غير صحيحة" });
+    }
+    
+    // إنشاء توكن صالح لمدة ساعة
+    const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token });
+});
+
+// دالة حماية المسارات الإدارية
 function adminAuth(req, res, next) {
-    if (req.headers['x-admin-token'] !== ADMIN_TOKEN)
-        return res.status(403).json({ error: "Unauthorized" });
-    next();
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) return res.status(403).json({ error: "No token provided" });
+    
+    const token = authHeader.split(' ')[1];
+    if (!token) return res.status(403).json({ error: "Invalid token format" });
+    
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+        if (err) return res.status(401).json({ error: "Unauthorized", message: "انتهت الجلسة" });
+        req.user = decoded;
+        next();
+    });
 }
 
-function generateCode(prefix = "Nacer") {
-    const part = () => crypto.randomBytes(2).toString('hex').toUpperCase();
-    return `${prefix}-${part()}-${part()}-${part()}`;
-}
-
-// ========== API للعميل (التطبيق) ==========
-// تمت إضافة verifyLimiter هنا لحماية المسار
+// ========== API للعميل (لا يحتاج توكن) ==========
 app.post('/api/verify', verifyLimiter, (req, res) => {
     const { code, device_id } = req.body;
     if (!code || !device_id) return res.json({ valid: false, reason: "missing_params" });
@@ -82,13 +106,13 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
     res.json({ valid: true, expires_at: expiresAt });
 });
 
-// ========== API للوحة التحكم ==========
+// ========== API للوحة التحكم (محمية بـ adminAuth) ==========
 app.post('/api/admin/codes', adminAuth, (req, res) => {
     const { duration_hours, max_devices = 1, count = 1, note = "" } = req.body;
     const codes = [];
     const stmt = db.prepare(`INSERT INTO codes (code, duration_hours, max_devices, note) VALUES (?, ?, ?, ?)`);
     for (let i = 0; i < count; i++) {
-        const code = generateCode();
+        const code = `Nacer-${crypto.randomBytes(2).toString('hex').toUpperCase()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
         stmt.run(code, duration_hours, max_devices, note);
         codes.push(code);
     }
