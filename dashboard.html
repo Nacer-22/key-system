@@ -4,97 +4,172 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Control panel Nacer_22</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
-    body { 
-        background-color: #050000; 
-        background-image: radial-gradient(circle at 50% 0%, rgba(139, 0, 0, 0.2) 0%, transparent 60%);
-        color: #fff; display: flex; justify-content: center; padding: 20px 15px; min-height: 100vh;
+    /* ====== الألوان الأصلية (لم يتم تغييرها) ====== */
+    :root {
+        --primary-red: #e50914;
+        --primary-hover: #ff1a25;
+        --dark-red: #8b0000;
+        --bg-dark: #050000;
+        --card-bg: rgba(15, 5, 5, 0.85);
+        --gold: #ffcc00;
+        --text-main: #ffffff;
+        --text-muted: #9ca3af;
+        --success: #22c55e;
+        --error: #ef4444;
+        --info: #3b82f6;
+        --border-color: rgba(229, 9, 20, 0.3);
     }
-    .container { 
-        width: 100%; max-width: 800px; 
-        background: rgba(15, 5, 5, 0.9); 
-        padding: 25px 20px; 
-        border-radius: 12px; 
-        border: 1px solid #e50914; 
-        text-align: center;
-        box-shadow: 0 0 20px rgba(229, 9, 20, 0.15);
-    }
-    
-    /* ترويسة */
-    .header { margin-bottom: 25px; }
-    img.logo { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #e50914; object-fit: cover; margin-bottom: 10px; }
-    h1 { color: #fff; font-size: 22px; font-weight: 900; }
-    h1 span { color: #e50914; }
 
-    /* قسم الدخول */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; }
+    
+    body { 
+        background-color: var(--bg-dark);
+        background-image: radial-gradient(circle at 50% 0%, rgba(139, 0, 0, 0.2) 0%, transparent 60%);
+        color: var(--text-main); 
+        display: flex; justify-content: center; align-items: flex-start;
+        min-height: 100vh; padding: 15px; padding-top: 25px;
+        font-size: 14px; line-height: 1.5;
+        overflow-x: hidden; /* منع التمرير الأفقي */
+    }
+
+    .container { 
+        width: 100%; max-width: 850px; 
+        background: var(--card-bg); 
+        backdrop-filter: blur(12px);
+        padding: 30px 20px; 
+        border-radius: 16px; 
+        border: 1px solid var(--border-color); 
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(229, 9, 20, 0.05);
+        animation: fadeIn 0.5s ease-out;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* ====== الترويسة ====== */
+    .header { display: flex; flex-direction: column; align-items: center; margin-bottom: 30px; }
+    .logo-wrapper { position: relative; width: 90px; height: 90px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; }
+    .logo-wrapper::before { content: ''; position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(229, 9, 20, 0.4) 0%, transparent 70%); border-radius: 50%; filter: blur(12px); z-index: -1; }
+    img.logo { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--primary-red); object-fit: cover; box-shadow: 0 0 15px rgba(229, 9, 20, 0.5); background: #000; }
+    h1 { color: var(--text-main); font-size: 24px; font-weight: 900; letter-spacing: 1px; text-align: center;}
+    h1 span { color: var(--primary-red); text-shadow: 0 0 10px rgba(229, 9, 20, 0.5); }
+
+    /* ====== قسم الدخول ====== */
     #login-section {
-        background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 10px;
-        border: 1px solid #333; max-width: 400px; margin: 0 auto 20px auto;
+        background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05); max-width: 400px; margin: 0 auto 20px auto;
+        box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
     }
     .input-row { display: flex; gap: 10px; }
-    input { 
-        flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #444; 
-        background: #000; color: #fff; font-size: 15px; outline: none; text-align: center; 
+    
+    /* ====== الحقول (Inputs) ====== */
+    input, select { 
+        width: 100%; padding: 13px 15px; border-radius: 8px; border: 1px solid #333; 
+        background: #0a0a0a; color: #fff; font-size: 15px; outline: none; 
+        font-family: 'Cairo', sans-serif; transition: all 0.3s ease;
     }
-    input:focus { border-color: #e50914; }
+    input:focus, select:focus { 
+        border-color: var(--primary-red); 
+        box-shadow: 0 0 12px rgba(229, 9, 20, 0.25); 
+        background: #000;
+    }
+
+    /* ====== الأزرار (Buttons) ====== */
     button { 
-        padding: 12px 20px; border-radius: 6px; border: none; 
-        background: linear-gradient(180deg, #cc0000 0%, #550000 100%); 
-        color: #fff; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.3s;
+        padding: 13px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); 
+        background: linear-gradient(180deg, var(--primary-red) 0%, var(--dark-red) 100%); 
+        color: #fff; font-weight: 900; font-size: 15px; cursor: pointer; 
+        transition: all 0.3s ease; display: flex; justify-content: center; align-items: center; gap: 8px;
+        box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
     }
-    button:hover { background: #e50914; }
+    button:hover:not(:disabled) { 
+        background: linear-gradient(180deg, var(--primary-hover) 0%, #a00000 100%); 
+        transform: translateY(-2px); box-shadow: 0 6px 20px rgba(229, 9, 20, 0.5); 
+    }
+    button:active:not(:disabled) { transform: translateY(0); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    /* لوحة التحكم (مخفية في البداية) */
-    #dashboard-content { display: none; }
-
-    /* بطاقات الأقسام */
+    /* ====== البطاقات (Cards) ====== */
     .card { 
-        background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 10px; 
-        margin-bottom: 20px; border: 1px solid #222; text-align: right;
+        background: rgba(0, 0, 0, 0.4); padding: 20px; border-radius: 12px; 
+        margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.05); 
+        text-align: right; box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
     }
-    .card-title { color: #e50914; font-size: 16px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; display: flex; align-items: center; gap: 8px; }
-
-    .input-group { flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; }
-    .input-group label { font-size: 12px; color: #aaa; font-weight: bold; }
-    select { 
-        width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #444; 
-        background: #000; color: #fff; font-size: 14px; outline: none;
+    .card-title { 
+        color: var(--primary-red); font-size: 17px; font-weight: 900; 
+        margin-bottom: 20px; border-bottom: 1px solid rgba(229, 9, 20, 0.2); 
+        padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between; 
     }
 
-    /* الأزرار */
-    .btn-sm { padding: 6px 12px; font-size: 12px; width: auto; }
-    .btn-blue { background: #1e3a8a; border: 1px solid #3b82f6; }
-    .btn-blue:hover { background: #2563eb; }
-    .btn-gold { background: #854d0e; border: 1px solid #eab308; }
-    .btn-gold:hover { background: #ca8a04; }
-    .btn-dark { background: #333; border: 1px solid #555; }
-    .btn-dark:hover { background: #444; }
-
-    /* قسم الأكواد */
-    .codes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-    .search-box { flex: 1; min-width: 150px; }
-    .search-box input { text-align: right; padding-right: 10px; font-size: 13px; }
+    /* ====== شبكة حقول الإنشاء ====== */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    @media (min-width: 768px) { .form-grid { grid-template-columns: repeat(4, 1fr); } }
     
+    .input-group { display: flex; flex-direction: column; gap: 8px; }
+    .input-group label { font-size: 13px; color: var(--text-muted); font-weight: 700; }
+
+    /* ====== قسم البحث ====== */
+    .search-box { margin-bottom: 20px; position: relative; }
+    .search-box input { padding-right: 15px; font-size: 14px; }
+    
+    /* ====== بطاقة الكود (Key Card) ====== */
     .key-card { 
-        background: rgba(20, 20, 20, 0.8); border: 1px solid #333; border-radius: 8px; 
-        padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;
+        background: linear-gradient(145deg, rgba(25, 10, 10, 0.9), rgba(10, 5, 5, 0.9)); 
+        border: 1px solid #2a2a2a; border-radius: 12px; 
+        padding: 20px; margin-bottom: 15px; 
+        display: flex; flex-direction: column; gap: 15px;
+        transition: all 0.3s ease;
     }
-    .key-header { display: flex; justify-content: space-between; align-items: center; }
-    .key-code { font-family: monospace; font-size: 16px; color: #ffcc00; font-weight: bold; }
-    .key-badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-    .badge-active { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; }
-    .badge-disabled { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
-    
-    .key-info { display: flex; gap: 15px; font-size: 12px; color: #aaa; flex-wrap: wrap; }
-    .key-actions { display: flex; gap: 8px; margin-top: 5px; }
-    .key-actions button { flex: 1; padding: 8px; font-size: 12px; }
+    .key-card:hover { border-color: rgba(229, 9, 20, 0.4); box-shadow: 0 5px 20px rgba(229, 9, 20, 0.1); }
 
-    #status-msg { color: #22c55e; font-weight: bold; display: none; margin-top: 10px; text-align: center; font-size: 13px;}
+    .key-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .key-code { 
+        font-family: monospace; font-size: 17px; color: var(--gold); 
+        font-weight: 900; word-break: break-all; direction: ltr; text-align: right;
+    }
+    
+    .key-badge { 
+        padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; 
+        display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+    }
+    .badge-active { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
+    .badge-disabled { background: rgba(239, 68, 68, 0.15); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.3); }
+    
+    .key-info { 
+        display: grid; grid-template-columns: 1fr 1fr; gap: 12px; 
+        font-size: 13px; color: var(--text-muted); 
+        background: rgba(0, 0, 0, 0.5); padding: 12px 15px; border-radius: 8px; 
+    }
+    @media (min-width: 600px) { .key-info { grid-template-columns: repeat(4, 1fr); } }
+    .key-info span { display: flex; align-items: center; gap: 8px; }
+    .key-info i { color: #666; font-size: 14px; width: 16px; text-align: center; }
+    
+    .key-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .key-actions button { flex: 1; padding: 10px 0; font-size: 13px; border-radius: 6px; min-width: 80px; }
+    
+    /* ====== تخصيص الأزرار ====== */
+    .btn-blue { background: #1e3a8a; border: 1px solid #3b82f6; box-shadow: 0 2px 10px rgba(37, 99, 235, 0.2); }
+    .btn-blue:hover:not(:disabled) { background: #2563eb; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4); }
+    .btn-gold { background: #854d0e; border: 1px solid #eab308; box-shadow: 0 2px 10px rgba(234, 179, 8, 0.2); }
+    .btn-gold:hover:not(:disabled) { background: #ca8a04; box-shadow: 0 4px 15px rgba(234, 179, 8, 0.4); }
+    .btn-del { background: #7f1d1d; border: 1px solid #ef4444; box-shadow: 0 2px 10px rgba(239, 68, 68, 0.2); }
+    .btn-del:hover:not(:disabled) { background: #b91c1c; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
+    .btn-dark { background: #333; border: 1px solid #555; box-shadow: none; }
+    .btn-dark:hover:not(:disabled) { background: #444; box-shadow: 0 4px 15px rgba(255,255,255,0.1); }
+
+    /* ====== رسائل الحالة ====== */
+    #status-msg { 
+        color: var(--success); font-weight: bold; display: none; 
+        margin-top: 15px; text-align: center; font-size: 14px; 
+        padding: 12px; border-radius: 8px; background: rgba(34,197,94,0.1); 
+        border: 1px solid rgba(34,197,94,0.2); 
+    }
+    
     .fa-spinner { animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .clear-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #666; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -102,28 +177,30 @@
 <div class="container">
     <!-- الترويسة -->
     <div class="header">
-        <img src="https://i.imgur.com/kf1AmpO.png" alt="Logo" class="logo">
+        <div class="logo-wrapper">
+            <img src="https://i.imgur.com/kf1AmpO.png" alt="Logo" class="logo">
+        </div>
         <h1>Control panel <span>Nacer_22</span></h1>
     </div>
 
-    <!-- 1. قسم الدخول (تحقق محلي فوري) -->
+    <!-- 1. قسم الدخول -->
     <div id="login-section">
         <div class="input-row">
-            <input type="password" id="tokenInput" placeholder="أدخل كلمة المرور" onkeypress="handleKeyPress(event)">
+            <input type="password" id="tokenInput" placeholder="أدخل كلمة المرور (Admin Token)" onkeypress="handleKeyPress(event)">
             <button onclick="login()">دخول</button>
         </div>
-        <div id="login-error" style="color:#ef4444; font-size:13px; margin-top:10px; display:none;">كلمة المرور غير صحيحة!</div>
+        <div id="login-error" style="color:var(--error); font-size:13px; margin-top:10px; display:none; text-align:center; font-weight:bold;">كلمة المرور غير صحيحة!</div>
     </div>
 
-    <!-- 2. محتوى لوحة التحكم (مخفي حتى يتم الدخول) -->
-    <div id="dashboard-content">
+    <!-- 2. محتوى لوحة التحكم -->
+    <div id="dashboard-content" style="display: none;">
         
         <!-- إنشاء الأكواد -->
         <div class="card">
-            <div class="card-title"><i class="fa-solid fa-plus"></i> إنشاء مفاتيح جديدة</div>
-            <div class="input-row" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+            <div class="card-title"><i class="fa-solid fa-plus-circle"></i> إنشاء مفاتيح جديدة</div>
+            <div class="form-grid">
                 <div class="input-group">
-                    <label>المدة</label>
+                    <label>مدة الصلاحية</label>
                     <input type="number" id="dur" value="24" min="1">
                 </div>
                 <div class="input-group">
@@ -144,22 +221,23 @@
                     <input type="number" id="dev" value="1" min="1">
                 </div>
             </div>
-            <button onclick="createCode()" id="btn-create" style="width:100%;"><i class="fa-solid fa-plus"></i> إنشاء الأكواد الآن</button>
+            <button onclick="createCode()" id="btn-create" style="width:100%;"><i class="fa-solid fa-bolt"></i> إنشاء الأكواد الآن</button>
         </div>
 
         <!-- قائمة الأكواد -->
         <div class="card">
-            <div class="card-title" style="justify-content: space-between;">
-                <span><i class="fa-solid fa-list"></i> الأكواد المسجلة</span>
-                <button class="btn-sm btn-dark" onclick="confirmDeleteAll()"><i class="fa-solid fa-trash"></i> حذف الكل</button>
+            <div class="card-title">
+                <span><i class="fa-solid fa-list-ul"></i> الأكواد المسجلة</span>
+                <button class="btn-dark" style="width: auto; padding: 6px 15px; font-size: 12px;" onclick="confirmDeleteAll()"><i class="fa-solid fa-trash"></i> حذف الكل</button>
             </div>
             
-            <div class="search-box" style="margin-bottom: 15px;">
-                <input type="text" id="searchInput" placeholder="ابحث عن كود..." oninput="filterCodes()">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="ابحث عن كود أو جزء منه..." oninput="filterCodes()">
+                <i class="fa-solid fa-search clear-icon"></i>
             </div>
 
             <div id="codes-container">
-                <!-- سيتم تعبئتها بالجافاسكريبت -->
+                <!-- سيتم تعبئتها ديناميكياً -->
             </div>
         </div>
 
@@ -168,16 +246,16 @@
 </div>
 
 <script>
+    // ⚠️ لم يتم تغيير أي متغير أو رابط سيرفر ⚠️
     const API = "https://key-system-yn0o.onrender.com"; 
-    const SECRET_PASSWORD = "Nacer_Nacer_22"; // كلمة المرور الثابتة
-    let adminToken = ""; // سيتم استخدامها لاحقاً لجلب الأكواد
+    const SECRET_PASSWORD = "Nacer_Nacer_22";
+    let adminToken = "";
     let allCodes = [];
 
     function handleKeyPress(e) {
         if (e.key === 'Enter') login();
     }
 
-    // دالة الدخول (تحقق محلي فوري بدون سيرفر)
     function login() {
         const inputVal = document.getElementById('tokenInput').value.trim();
         const errorMsg = document.getElementById('login-error');
@@ -186,49 +264,43 @@
             errorMsg.style.display = 'none';
             adminToken = inputVal;
             
-            // إخفاء شاشة الدخول وإظهار لوحة التحكم فوراً
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('dashboard-content').style.display = 'block';
             
-            // بدء جلب الأكواد من السيرفر في الخلفية
             fetchCodes();
         } else {
             errorMsg.style.display = 'block';
         }
     }
 
-    // إظهار رسائل الحالة (نجاح/خطأ)
     function showMsg(msg, isError = false) {
         const status = document.getElementById('status-msg');
         status.innerText = msg;
-        status.style.color = isError ? "#ef4444" : "#22c55e";
+        status.style.color = isError ? "var(--error)" : "var(--success)";
+        status.style.background = isError ? "rgba(239,68,68,0.1)" : "rgba(34,197,94,0.1)";
+        status.style.borderColor = isError ? "rgba(239,68,68,0.2)" : "rgba(34,197,94,0.2)";
         status.style.display = 'block';
         setTimeout(() => { status.style.display = 'none'; }, 4000);
     }
 
-    // جلب الأكواد من السيرفر
     async function fetchCodes() {
         try {
-            const res = await fetch(`${API}/api/admin/codes`, { 
-                headers: {'x-admin-token': adminToken} 
-            });
-            
+            const res = await fetch(`${API}/api/admin/codes`, { headers: {'x-admin-token': adminToken} });
             if(res.ok) {
                 allCodes = await res.json();
                 renderCodes(allCodes);
             }
         } catch(err) {
-            showMsg("تعذر جلب البيانات (السيرفر قد يكون نائماً، انتظر 30 ثانية).", true);
+            showMsg("تعذر جلب البيانات (السيرفر قد يكون نائماً).", true);
         }
     }
 
-    // عرض الأكواد
     function renderCodes(codesToRender) {
         const container = document.getElementById('codes-container');
         container.innerHTML = '';
 
         if (codesToRender.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">لا توجد أكواد حالياً</div>';
+            container.innerHTML = '<div style="text-align:center; color:#666; padding:30px; font-weight:bold;">لا توجد أكواد حالياً</div>';
             return;
         }
 
@@ -246,28 +318,27 @@
                     <div class="key-badge ${badgeClass}">${badgeText}</div>
                 </div>
                 <div class="key-info">
-                    <span><i class="fa-regular fa-clock"></i> ${durationText}</span>
-                    <span><i class="fa-solid fa-mobile-screen"></i> أجهزة: ${c.max_devices}</span>
+                    <span><i class="fa-regular fa-clock"></i> المدة: ${durationText}</span>
+                    <span><i class="fa-solid fa-mobile-screen"></i> الأجهزة: ${c.max_devices}</span>
                     <span><i class="fa-solid fa-users"></i> مستخدم: ${c.used}</span>
+                    <span><i class="fa-solid fa-calendar"></i> ${new Date(c.created_at).toLocaleDateString('ar-EG')}</span>
                 </div>
                 <div class="key-actions">
                     <button class="btn-blue" onclick="copyCode('${c.code}')"><i class="fa-regular fa-copy"></i> نسخ</button>
                     <button class="btn-gold" onclick="resetDevice(${c.id})"><i class="fa-solid fa-rotate-right"></i> ريسيت</button>
-                    <button class="btn-dark" style="background:#7f1d1d; border-color:#ef4444;" onclick="deleteCode(${c.id})"><i class="fa-solid fa-trash"></i> حذف</button>
+                    <button class="btn-del" onclick="deleteCode(${c.id})"><i class="fa-solid fa-trash"></i> حذف</button>
                 </div>
             `;
             container.appendChild(card);
         });
     }
 
-    // فلترة البحث
     function filterCodes() {
         const term = document.getElementById('searchInput').value.toLowerCase();
         const filtered = allCodes.filter(c => c.code.toLowerCase().includes(term));
         renderCodes(filtered);
     }
 
-    // إنشاء كود جديد
     async function createCode() {
         const btn = document.getElementById('btn-create');
         const originalHTML = btn.innerHTML;
@@ -299,7 +370,7 @@
             if(res.ok) {
                 showMsg(`تم إنشاء ${count} مفاتيح بنجاح`);
                 document.getElementById('cnt').value = "1";
-                fetchCodes(); // تحديث القائمة
+                fetchCodes();
             } else {
                 showMsg("حدث خطأ أثناء الإنشاء", true);
             }
@@ -311,14 +382,12 @@
         }
     }
 
-    // نسخ الكود
     function copyCode(code) {
         navigator.clipboard.writeText(code).then(() => {
             showMsg("تم نسخ الكود: " + code);
         });
     }
 
-    // حذف كود واحد
     async function deleteCode(id) {
         if(!confirm("هل أنت متأكد من حذف هذا الكود؟")) return;
         try {
@@ -327,7 +396,6 @@
         } catch(e) { showMsg("حدث خطأ", true); }
     }
 
-    // إعادة تعيين الأجهزة
     async function resetDevice(id) {
         if(!confirm("هل أنت متأكد من إعادة تعيين هذا المفتاح (فصل الأجهزة)؟")) return;
         try {
@@ -336,7 +404,6 @@
         } catch(e) { showMsg("حدث خطأ", true); }
     }
 
-    // حذف الكل
     async function confirmDeleteAll() {
         if(!confirm("تحذير: سيتم حذف جميع الأكواد نهائياً! هل أنت متأكد؟")) return;
         try {
