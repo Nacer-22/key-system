@@ -18,7 +18,6 @@
         --text-muted: #9ca3af;
         --success: #22c55e;
         --error: #ef4444;
-        --info: #3b82f6;
         --border-color: rgba(229, 9, 20, 0.2);
         --sidebar-width: 260px;
     }
@@ -30,7 +29,6 @@
         min-height: 100vh; font-size: 14px; line-height: 1.5; overflow-x: hidden;
     }
 
-    /* ============ شاشة الدخول ============ */
     #login-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
         background-color: var(--bg-dark);
@@ -75,7 +73,6 @@
     }
     .login-box button:hover { background: linear-gradient(180deg, var(--primary-hover) 0%, #a00000 100%); transform: translateY(-2px); }
 
-    /* ============ لوحة التحكم ============ */
     #dashboard-layout { display: none; min-height: 100vh; }
     .app-layout { display: flex; min-height: 100vh; }
 
@@ -237,7 +234,6 @@
     let allCodes = [];
     let authToken = sessionStorage.getItem('adminToken') || "";
 
-    // التحقق عند فتح الصفحة (إذا كان هناك توكن صالح)
     window.onload = () => {
         if (authToken) {
             showDashboard();
@@ -249,7 +245,6 @@
         if (e.key === 'Enter') login();
     }
 
-    // دالة الدخول (ترسل الطلب للسيرفر)
     async function login() {
         const inputVal = document.getElementById('tokenInput').value.trim();
         const errorMsg = document.getElementById('login-error');
@@ -313,7 +308,6 @@
         setTimeout(() => { status.style.display = 'none'; }, 4000);
     }
 
-    // دالة مساعدة لإضافة هيدر التوكن
     function getHeaders() {
         return {
             'Content-Type': 'application/json',
@@ -326,7 +320,7 @@
             const res = await fetch(`${API}/api/admin/codes`, { headers: getHeaders() });
             
             if (res.status === 401 || res.status === 403) {
-                logout(); // إذا انتهت الجلسة، سجل الخروج
+                logout();
                 return;
             }
             
