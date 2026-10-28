@@ -2,463 +2,1301 @@
 <html dir="rtl" lang="ar">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Control panel Nacer_22</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07080a">
+<title>لوحة التحكم · Nacer_22</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
-    :root {
-        --primary-red: #e50914;
-        --primary-hover: #ff1a25;
-        --dark-red: #8b0000;
-        --bg-dark: #050000;
-        --card-bg: rgba(15, 5, 5, 0.85);
-        --gold: #ffcc00;
-        --text-main: #ffffff;
-        --text-muted: #9ca3af;
-        --success: #22c55e;
-        --error: #ef4444;
-        --border-color: rgba(229, 9, 20, 0.2);
-        --sidebar-width: 260px;
+    :root{
+        --bg:#07080a;
+        --surface:#101319;
+        --surface-2:#151922;
+        --surface-3:#1b2029;
+        --line:rgba(255,255,255,.07);
+        --line-strong:rgba(255,255,255,.13);
+        --red:#ff2b3d;
+        --red-deep:#c00d1c;
+        --gold:#f3c969;
+        --green:#2fd07a;
+        --amber:#f5a524;
+        --muted:#8b93a2;
+        --muted-2:#616a7a;
+        --text:#eef1f6;
+        --radius:16px;
+        --radius-sm:10px;
+        --sidebar:272px;
+        --ease:cubic-bezier(.22,.61,.36,1);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; }
-    
-    body { 
-        background-color: var(--bg-dark); color: var(--text-main); 
-        min-height: 100vh; font-size: 14px; line-height: 1.5; overflow-x: hidden;
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html{scroll-behavior:smooth}
+    body{
+        font-family:'Cairo',system-ui,sans-serif;
+        background:var(--bg);
+        color:var(--text);
+        min-height:100vh;
+        font-size:14px;
+        line-height:1.6;
+        overflow-x:hidden;
+        -webkit-font-smoothing:antialiased;
     }
-
-    #login-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
-        background-color: var(--bg-dark);
-        background-image: radial-gradient(circle at 50% 0%, rgba(139, 0, 0, 0.25) 0%, transparent 60%);
-        display: flex; justify-content: center; align-items: center;
-        z-index: 9999; transition: opacity 0.4s ease;
+    body::before{
+        content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+        background:
+            radial-gradient(900px 500px at 85% -10%, rgba(255,43,61,.10), transparent 65%),
+            radial-gradient(700px 420px at 5% 100%, rgba(255,43,61,.05), transparent 70%);
     }
-    
-    .login-box {
-        background: linear-gradient(145deg, #110202, #050000);
-        border: 1px solid var(--primary-red); border-radius: 16px;
-        padding: 40px 30px; width: 90%; max-width: 380px;
-        text-align: center;
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(229, 9, 20, 0.2);
+    ::selection{background:rgba(255,43,61,.35);color:#fff}
+    ::-webkit-scrollbar{width:10px;height:10px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:#232833;border-radius:20px;border:3px solid var(--bg)}
+    ::-webkit-scrollbar-thumb:hover{background:#333a48}
+
+    button,input,select,textarea{font-family:inherit}
+    a{color:inherit;text-decoration:none}
+
+    /* ============ SHARED ============ */
+    .btn{
+        display:inline-flex;align-items:center;justify-content:center;gap:9px;
+        padding:12px 20px;border-radius:var(--radius-sm);border:1px solid transparent;
+        font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap;
+        transition:transform .18s var(--ease),background .2s,border-color .2s,box-shadow .2s,opacity .2s;
+        color:#fff;background:linear-gradient(180deg,#ff3547,#cf1223);
+        box-shadow:0 8px 22px rgba(255,43,61,.25),inset 0 1px 0 rgba(255,255,255,.18);
     }
-    
-    .login-box img { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--primary-red); box-shadow: 0 0 15px rgba(229, 9, 20, 0.4); margin-bottom: 15px; background: #000; object-fit: cover; }
-    .login-box h2 { font-size: 22px; font-weight: 900; margin-bottom: 5px; }
-    .login-box h2 span { color: var(--primary-red); }
-    .login-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 25px; }
-
-    .login-input-group {
-        display: flex; align-items: center; background: #000; border: 1px solid #333;
-        border-radius: 8px; padding: 5px 15px; margin-bottom: 10px; transition: 0.3s;
+    .btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 28px rgba(255,43,61,.35),inset 0 1px 0 rgba(255,255,255,.22)}
+    .btn:active:not(:disabled){transform:translateY(0)}
+    .btn:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+    .btn-ghost{
+        background:var(--surface-2);border-color:var(--line);color:var(--text);
+        box-shadow:none;font-weight:700;
     }
-    .login-input-group:focus-within { border-color: var(--primary-red); box-shadow: 0 0 10px rgba(229, 9, 20, 0.3); }
-    .login-input-group i { color: var(--primary-red); margin-left: 10px; font-size: 16px; }
-    .login-input-group input { 
-        flex: 1; background: transparent; border: none; color: #fff; 
-        padding: 12px 0; outline: none; font-size: 16px; text-align: center; letter-spacing: 2px; 
+    .btn-ghost:hover:not(:disabled){background:var(--surface-3);border-color:var(--line-strong);transform:translateY(-1px);box-shadow:none}
+    .btn-danger-soft{background:rgba(255,43,61,.1);border-color:rgba(255,43,61,.25);color:#ff6b78;box-shadow:none}
+    .btn-danger-soft:hover:not(:disabled){background:rgba(255,43,61,.18);border-color:rgba(255,43,61,.45);box-shadow:none}
+    .icon-btn{
+        width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;
+        border-radius:9px;border:1px solid var(--line);background:var(--surface-2);
+        color:var(--muted);cursor:pointer;font-size:14px;
+        transition:all .18s var(--ease);
     }
+    .icon-btn:hover{color:#fff;background:var(--surface-3);border-color:var(--line-strong);transform:translateY(-1px)}
+    .icon-btn.danger:hover{color:#ff6b78;border-color:rgba(255,43,61,.4);background:rgba(255,43,61,.12)}
+    .icon-btn.gold:hover{color:var(--gold);border-color:rgba(243,201,105,.35);background:rgba(243,201,105,.1)}
+    .icon-btn.green:hover{color:var(--green);border-color:rgba(47,208,122,.35);background:rgba(47,208,122,.1)}
 
-    .login-error { color: var(--error); font-size: 13px; font-weight: bold; margin-bottom: 15px; display: none; }
-    .login-error.show { display: block; }
-
-    .login-box button {
-        width: 100%; padding: 14px; border-radius: 8px; border: none;
-        background: linear-gradient(180deg, var(--primary-red) 0%, var(--dark-red) 100%);
-        color: #fff; font-weight: 900; font-size: 16px; cursor: pointer;
-        box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3); transition: 0.3s;
-        display: flex; justify-content: center; align-items: center; gap: 8px;
+    /* ============ LOGIN ============ */
+    #login-overlay{
+        position:fixed;inset:0;z-index:9000;display:grid;grid-template-columns:1.05fr .95fr;
+        background:var(--bg);transition:opacity .45s var(--ease),visibility .45s;
     }
-    .login-box button:hover { background: linear-gradient(180deg, var(--primary-hover) 0%, #a00000 100%); transform: translateY(-2px); }
+    #login-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
 
-    #dashboard-layout { display: none; min-height: 100vh; }
-    .app-layout { display: flex; min-height: 100vh; }
-
-    .sidebar {
-        width: var(--sidebar-width); background: rgba(10, 2, 2, 0.95);
-        border-left: 1px solid var(--border-color); display: flex; flex-direction: column;
-        padding: 20px 0; position: fixed; top: 0; right: 0; bottom: 0; z-index: 100;
+    .login-visual{
+        position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;
+        padding:48px;border-left:1px solid var(--line);
+        background:
+            radial-gradient(700px 500px at 70% 15%, rgba(255,43,61,.22), transparent 60%),
+            radial-gradient(500px 400px at 10% 90%, rgba(255,43,61,.10), transparent 65%),
+            linear-gradient(160deg,#0d0f14,#08090c);
     }
-    .brand-section { display: flex; flex-direction: column; align-items: center; padding: 0 20px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px; }
-    .brand-section img { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--primary-red); box-shadow: 0 0 15px rgba(229, 9, 20, 0.4); margin-bottom: 10px; background: #000; object-fit: cover; }
-    .brand-section h1 { font-size: 20px; font-weight: 900; color: #fff; text-align: center;}
-    .brand-section h1 span { color: var(--primary-red); }
-
-    .nav-menu { display: flex; flex-direction: column; gap: 5px; padding: 0 15px; }
-    .nav-item {
-        display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 8px;
-        color: var(--text-muted); text-decoration: none; font-weight: 700; font-size: 14px; transition: all 0.3s;
+    .login-visual::before{
+        content:"";position:absolute;inset:0;
+        background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+                         linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+        background-size:56px 56px;
+        mask-image:radial-gradient(circle at 60% 40%,#000 10%,transparent 75%);
+        -webkit-mask-image:radial-gradient(circle at 60% 40%,#000 10%,transparent 75%);
     }
-    .nav-item:hover, .nav-item.active { background: rgba(229, 9, 20, 0.1); color: #fff; border-right: 3px solid var(--primary-red); }
-    .nav-item i { width: 20px; text-align: center; font-size: 16px; }
-
-    .main-content {
-        flex: 1; margin-right: var(--sidebar-width); padding: 25px 30px;
-        background-image: radial-gradient(circle at 50% 0%, rgba(139, 0, 0, 0.1) 0%, transparent 60%);
-        display: flex; flex-direction: column; gap: 25px;
+    .login-visual::after{
+        content:"";position:absolute;width:520px;height:520px;border-radius:50%;
+        left:-140px;bottom:-180px;border:1px solid rgba(255,43,61,.18);
+        box-shadow:0 0 0 60px rgba(255,43,61,.03),0 0 0 120px rgba(255,43,61,.02);
     }
-
-    .panel-card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.5); }
-    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(229, 9, 20, 0.15); }
-    .panel-title { font-size: 18px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 10px; }
-    .panel-title i { color: var(--primary-red); }
-
-    .create-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; align-items: end; }
-    .input-group { display: flex; flex-direction: column; gap: 8px; }
-    .input-group label { font-size: 13px; color: var(--text-muted); font-weight: 700; }
-    
-    input, select { width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid #333; background: #0a0a0a; color: #fff; font-size: 14px; outline: none; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; }
-    input:focus, select:focus { border-color: var(--primary-red); box-shadow: 0 0 10px rgba(229, 9, 20, 0.2); }
-
-    button { padding: 12px 20px; border-radius: 8px; border: none; background: linear-gradient(180deg, var(--primary-red) 0%, var(--dark-red) 100%); color: #fff; font-weight: 900; font-size: 14px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3); }
-    button:hover:not(:disabled) { background: linear-gradient(180deg, var(--primary-hover) 0%, #a00000 100%); transform: translateY(-2px); }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .key-list { display: flex; flex-direction: column; gap: 10px; }
-    .key-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; background: rgba(0, 0, 0, 0.4); border: 1px solid #222; border-radius: 8px; padding: 12px 15px; gap: 15px; transition: 0.3s; }
-    .key-row:hover { border-color: rgba(229, 9, 20, 0.3); background: rgba(20, 5, 5, 0.6); }
-    .key-main-info { display: flex; align-items: center; gap: 15px; flex: 1; min-width: 200px;}
-    .key-code { font-family: monospace; font-size: 16px; color: var(--gold); font-weight: 900; direction: ltr; }
-    .key-badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-    .badge-active { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
-    .badge-disabled { background: rgba(239, 68, 68, 0.15); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.3); }
-    .key-stats { display: flex; gap: 20px; font-size: 13px; color: var(--text-muted); flex-wrap: wrap; }
-    .key-stats span { display: flex; align-items: center; gap: 6px; }
-    .key-actions { display: flex; gap: 8px; }
-    .key-actions button { padding: 8px 12px; font-size: 13px; border-radius: 6px; }
-    .btn-blue { background: #1e3a8a; border: 1px solid #3b82f6; box-shadow: none; }
-    .btn-blue:hover:not(:disabled) { background: #2563eb; }
-    .btn-gold { background: #854d0e; border: 1px solid #eab308; box-shadow: none; }
-    .btn-gold:hover:not(:disabled) { background: #ca8a04; }
-    .btn-del { background: #7f1d1d; border: 1px solid #ef4444; box-shadow: none; }
-    .btn-del:hover:not(:disabled) { background: #b91c1c; }
-    .btn-dark { background: #333; border: 1px solid #444; box-shadow: none; }
-    .btn-dark:hover:not(:disabled) { background: #444; }
-
-    .search-input { max-width: 100%; position: relative; margin-bottom: 20px; }
-    .search-input input { padding-right: 40px; }
-    .search-input i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #666; }
-
-    #status-msg { color: var(--success); font-weight: bold; display: none; font-size: 14px; padding: 15px; border-radius: 8px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); text-align: center; }
-
-    @media (max-width: 768px) {
-        .app-layout { flex-direction: column; }
-        .sidebar { position: relative; width: 100%; height: auto; flex-direction: row; padding: 10px 15px; border-left: none; border-bottom: 1px solid var(--border-color); justify-content: space-between; align-items: center; }
-        .brand-section { flex-direction: row; padding: 0; border: none; margin: 0; gap: 10px; }
-        .brand-section img { width: 40px; height: 40px; margin: 0; border-width: 1px; }
-        .brand-section h1 { font-size: 16px; text-align: right; }
-        .nav-menu { display: none; }
-        .main-content { margin-right: 0; padding: 15px; }
-        .key-row { flex-direction: column; align-items: flex-start; gap: 12px; padding: 15px; }
-        .key-main-info { width: 100%; justify-content: space-between; }
-        .key-stats { width: 100%; justify-content: space-between; padding-top: 12px; border-top: 1px dashed #333; }
-        .key-actions { width: 100%; justify-content: flex-end; }
-        .key-actions button { flex: 1; }
-        .create-form { grid-template-columns: 1fr 1fr; }
-        .create-form button { grid-column: span 2; }
-        .login-box { padding: 30px 20px; }
+    .lv-top{position:relative;z-index:2;display:flex;align-items:center;gap:14px}
+    .lv-logo{
+        width:52px;height:52px;border-radius:14px;object-fit:cover;background:#000;
+        border:1px solid rgba(255,43,61,.5);box-shadow:0 0 24px rgba(255,43,61,.35);
     }
-    .fa-spinner { animation: spin 1s linear infinite; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .lv-brand-name{font-size:18px;font-weight:900;letter-spacing:.2px;line-height:1.2}
+    .lv-brand-name span{color:var(--red)}
+    .lv-brand-sub{font-size:11px;color:var(--muted);letter-spacing:2.4px;font-weight:700;text-transform:uppercase}
+
+    .lv-center{position:relative;z-index:2;max-width:520px}
+    .lv-pill{
+        display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:100px;
+        border:1px solid rgba(255,43,61,.28);background:rgba(255,43,61,.08);
+        color:#ff8a94;font-size:12px;font-weight:800;margin-bottom:26px;
+    }
+    .lv-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 0 4px rgba(255,43,61,.15);animation:pulse 2.2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+    .lv-center h1{font-size:clamp(30px,3.4vw,46px);font-weight:900;line-height:1.25;letter-spacing:-.5px}
+    .lv-center h1 em{font-style:normal;color:var(--red)}
+    .lv-center p{color:var(--muted);font-size:15px;margin-top:16px;max-width:430px}
+    .lv-features{display:grid;gap:14px;margin-top:34px}
+    .lv-feature{display:flex;align-items:center;gap:12px;font-size:13.5px;color:#c6ccd8;font-weight:600}
+    .lv-feature i{
+        width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:12px;
+        background:rgba(255,43,61,.1);border:1px solid rgba(255,43,61,.22);color:#ff6b78;flex:none;
+    }
+    .lv-bottom{position:relative;z-index:2;font-size:12px;color:var(--muted-2);display:flex;align-items:center;gap:8px}
+
+    .login-panel{display:flex;align-items:center;justify-content:center;padding:40px 28px;position:relative}
+    .login-card{width:100%;max-width:400px;animation:rise .6s var(--ease) both}
+    @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+    .login-mobile-logo{display:none;text-align:center;margin-bottom:26px}
+    .login-mobile-logo img{width:66px;height:66px;border-radius:18px;object-fit:cover;border:1px solid rgba(255,43,61,.5);box-shadow:0 0 26px rgba(255,43,61,.3)}
+    .login-card h2{font-size:26px;font-weight:900;letter-spacing:-.3px}
+    .login-card h2 span{color:var(--red)}
+    .login-card .sub{color:var(--muted);font-size:13.5px;margin:6px 0 30px}
+
+    .field{display:flex;flex-direction:column;gap:8px}
+    .field label{font-size:12.5px;font-weight:800;color:#b9c0cd;letter-spacing:.2px}
+    .input-wrap{position:relative;display:flex;align-items:center}
+    .input-wrap>i.lead{position:absolute;right:15px;color:var(--muted-2);font-size:14px;pointer-events:none;transition:color .2s}
+    .input-wrap:focus-within>i.lead{color:var(--red)}
+    .input-wrap input{
+        width:100%;padding:14px 44px 14px 46px;border-radius:12px;border:1px solid var(--line-strong);
+        background:var(--surface);color:#fff;font-size:14.5px;outline:none;transition:all .2s;
+        letter-spacing:.5px;
+    }
+    .input-wrap input::placeholder{color:var(--muted-2);letter-spacing:0}
+    .input-wrap input:focus{border-color:rgba(255,43,61,.55);background:#0d1015;box-shadow:0 0 0 4px rgba(255,43,61,.1)}
+    .eye-btn{
+        position:absolute;left:8px;width:32px;height:32px;border-radius:8px;border:none;background:transparent;
+        color:var(--muted-2);cursor:pointer;display:grid;place-items:center;font-size:14px;transition:.2s;
+    }
+    .eye-btn:hover{color:#fff;background:var(--surface-2)}
+
+    .login-row{display:flex;align-items:center;justify-content:space-between;margin:18px 0 22px}
+    .check{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted);cursor:pointer;font-weight:600;user-select:none}
+    .check input{appearance:none;width:17px;height:17px;border-radius:5px;border:1.5px solid #333a48;background:#0d1015;cursor:pointer;position:relative;transition:.2s;flex:none}
+    .check input:checked{background:var(--red);border-color:var(--red)}
+    .check input:checked::after{content:"\f00c";font-family:"Font Awesome 6 Free";font-weight:900;font-size:9px;color:#fff;position:absolute;inset:0;display:grid;place-items:center}
+    .login-hint{font-size:12px;color:var(--muted-2);display:inline-flex;align-items:center;gap:6px}
+
+    .login-error{
+        display:none;align-items:flex-start;gap:9px;font-size:12.5px;font-weight:700;color:#ff8a94;
+        background:rgba(255,43,61,.09);border:1px solid rgba(255,43,61,.25);
+        padding:11px 13px;border-radius:10px;margin-bottom:16px;line-height:1.5;
+    }
+    .login-error.show{display:flex;animation:shake .4s}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    .login-error i{margin-top:2px}
+
+    .btn-login{width:100%;padding:14px;font-size:15px;border-radius:12px}
+    .login-foot{margin-top:26px;text-align:center;font-size:11.5px;color:var(--muted-2);display:flex;align-items:center;justify-content:center;gap:7px}
+
+    /* ============ APP SHELL ============ */
+    #dashboard-layout{display:none;position:relative;z-index:1}
+    #dashboard-layout.ready{display:block}
+    .app-layout{display:flex;min-height:100vh}
+
+    .sidebar{
+        width:var(--sidebar);position:fixed;top:0;right:0;bottom:0;z-index:120;
+        display:flex;flex-direction:column;padding:22px 16px;
+        background:linear-gradient(180deg,#0c0e13 0%,#08090c 100%);
+        border-left:1px solid var(--line);
+    }
+    .brand{display:flex;align-items:center;gap:12px;padding:0 8px 20px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+    .brand img{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#000;border:1px solid rgba(255,43,61,.45);box-shadow:0 0 18px rgba(255,43,61,.22);flex:none}
+    .brand-text h1{font-size:15.5px;font-weight:900;line-height:1.25}
+    .brand-text h1 span{color:var(--red)}
+    .brand-text p{font-size:9.5px;letter-spacing:2px;color:var(--muted-2);font-weight:800;text-transform:uppercase}
+
+    .nav-label{font-size:10px;letter-spacing:2px;color:var(--muted-2);font-weight:800;padding:0 12px;margin-bottom:8px;text-transform:uppercase}
+    .nav{display:flex;flex-direction:column;gap:4px}
+    .nav-item{
+        position:relative;display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:10px;
+        color:var(--muted);font-weight:700;font-size:13.5px;transition:all .2s var(--ease);cursor:pointer;
+    }
+    .nav-item i{width:19px;text-align:center;font-size:14px;transition:.2s}
+    .nav-item:hover{background:rgba(255,255,255,.035);color:#dfe4ec}
+    .nav-item.active{background:linear-gradient(90deg,rgba(255,43,61,.16),rgba(255,43,61,.03));color:#fff}
+    .nav-item.active i{color:var(--red)}
+    .nav-item.active::before{content:"";position:absolute;right:0;top:50%;transform:translateY(-50%);width:3px;height:20px;border-radius:4px;background:var(--red);box-shadow:0 0 12px rgba(255,43,61,.7)}
+    .nav-item .count{margin-right:auto;font-size:11px;font-weight:800;background:var(--surface-2);border:1px solid var(--line);padding:1px 8px;border-radius:100px;color:var(--muted)}
+    .nav-item.active .count{background:rgba(255,43,61,.15);border-color:rgba(255,43,61,.3);color:#ff8a94}
+
+    .sidebar-foot{margin-top:auto;padding-top:16px;border-top:1px solid var(--line)}
+    .user-card{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+    .user-avatar{width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#ff3547,#8d0a15);display:grid;place-items:center;font-weight:900;font-size:13px;color:#fff;flex:none;box-shadow:0 4px 12px rgba(255,43,61,.3)}
+    .user-meta{flex:1;min-width:0}
+    .user-meta b{display:block;font-size:12.5px;font-weight:800}
+    .user-meta span{font-size:10.5px;color:var(--muted-2);display:flex;align-items:center;gap:5px}
+    .user-meta span::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--green)}
+
+    .main{margin-right:var(--sidebar);flex:1;min-width:0;display:flex;flex-direction:column}
+    .topbar{
+        position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:16px;
+        padding:0 30px;height:70px;border-bottom:1px solid var(--line);
+        background:rgba(7,8,10,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    }
+    .topbar-title{display:flex;flex-direction:column;line-height:1.3}
+    .topbar-title h2{font-size:16.5px;font-weight:900;letter-spacing:-.2px}
+    .topbar-title span{font-size:11.5px;color:var(--muted-2)}
+    .topbar-actions{margin-right:auto;display:flex;align-items:center;gap:9px}
+    .live-badge{
+        display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--green);
+        background:rgba(47,208,122,.08);border:1px solid rgba(47,208,122,.2);padding:6px 12px;border-radius:100px;
+    }
+    .live-badge i{font-size:6px;animation:pulse 2s infinite}
+    .content{padding:28px 30px 60px;width:100%;max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+
+    /* ============ STATS ============ */
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+    .stat{
+        position:relative;overflow:hidden;padding:20px;border-radius:var(--radius);
+        background:linear-gradient(165deg,rgba(255,255,255,.045),rgba(255,255,255,.012));
+        border:1px solid var(--line);transition:transform .25s var(--ease),border-color .25s;
+    }
+    .stat:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.14)}
+    .stat::after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;left:-40px;top:-40px;background:radial-gradient(circle,rgba(255,43,61,.16),transparent 70%);pointer-events:none}
+    .stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .stat-icon{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:15px;background:rgba(255,43,61,.1);border:1px solid rgba(255,43,61,.2);color:#ff6b78}
+    .stat-icon.green{background:rgba(47,208,122,.1);border-color:rgba(47,208,122,.2);color:var(--green)}
+    .stat-icon.gold{background:rgba(243,201,105,.1);border-color:rgba(243,201,105,.2);color:var(--gold)}
+    .stat-icon.grey{background:rgba(255,255,255,.05);border-color:var(--line);color:var(--muted)}
+    .stat-trend{font-size:10.5px;font-weight:800;color:var(--muted-2);display:inline-flex;align-items:center;gap:5px}
+    .stat-value{font-size:27px;font-weight:900;letter-spacing:-1px;line-height:1.1;font-variant-numeric:tabular-nums}
+    .stat-label{font-size:12px;color:var(--muted);font-weight:700;margin-top:4px}
+
+    /* ============ PANELS ============ */
+    .panel{
+        background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.008));
+        border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+    }
+    .panel-head{display:flex;align-items:center;gap:14px;padding:20px 22px;border-bottom:1px solid var(--line)}
+    .panel-title{display:flex;align-items:center;gap:11px;font-size:15px;font-weight:900}
+    .panel-title .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:rgba(255,43,61,.1);border:1px solid rgba(255,43,61,.2);color:#ff6b78;font-size:13px;flex:none}
+    .panel-title small{display:block;font-size:11px;font-weight:600;color:var(--muted-2);margin-top:1px}
+    .panel-head-actions{margin-right:auto;display:flex;gap:8px;align-items:center}
+    .panel-body{padding:22px}
+
+    /* create form */
+    .presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+    .preset{
+        padding:7px 14px;border-radius:100px;border:1px solid var(--line);background:var(--surface);
+        color:var(--muted);font-size:12px;font-weight:800;cursor:pointer;transition:.2s;
+    }
+    .preset:hover{color:#fff;border-color:var(--line-strong);background:var(--surface-2)}
+    .preset.active{background:rgba(255,43,61,.12);border-color:rgba(255,43,61,.4);color:#ff8a94}
+
+    .form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:end}
+    .form-grid .field label{display:flex;align-items:center;gap:6px}
+    .form-grid .field label i{color:var(--muted-2);font-size:11px}
+    .control{
+        width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line-strong);
+        background:var(--surface);color:#fff;font-size:14px;font-weight:700;outline:none;transition:.2s;
+    }
+    .control::placeholder{color:var(--muted-2);font-weight:600}
+    .control:focus{border-color:rgba(255,43,61,.55);box-shadow:0 0 0 4px rgba(255,43,61,.09);background:#0d1015}
+    select.control{appearance:none;cursor:pointer;padding-left:34px;
+        background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b93a2' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+        background-repeat:no-repeat;background-position:left 14px center;
+    }
+    .note-field{grid-column:span 3}
+    .form-submit{height:44px;padding:0 26px}
+    .form-hint{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted-2);margin-top:14px;flex-wrap:wrap}
+    .form-hint i{color:var(--gold)}
+
+    /* codes toolbar */
+    .codes-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 22px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.15)}
+    .tabs{display:flex;gap:3px;padding:3px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
+    .tab{
+        padding:7px 14px;border-radius:8px;border:none;background:transparent;color:var(--muted);
+        font-size:12px;font-weight:800;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:6px;
+    }
+    .tab:hover{color:#dfe4ec}
+    .tab.active{background:var(--surface-3);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    .tab .n{font-size:10px;background:rgba(255,255,255,.07);padding:0 6px;border-radius:100px;color:var(--muted)}
+    .tab.active .n{background:rgba(255,43,61,.2);color:#ff8a94}
+    .search{position:relative;flex:1;min-width:180px;max-width:340px}
+    .search i{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--muted-2);font-size:12.5px;pointer-events:none}
+    .search input{width:100%;padding:10px 38px 10px 14px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);color:#fff;font-size:13px;outline:none;transition:.2s}
+    .search input::placeholder{color:var(--muted-2)}
+    .search input:focus{border-color:rgba(255,43,61,.5);box-shadow:0 0 0 3px rgba(255,43,61,.08)}
+    .toolbar-end{margin-right:auto;display:flex;gap:8px}
+
+    /* code rows */
+    .codes-list{padding:16px 22px 22px;display:flex;flex-direction:column;gap:10px}
+    .code-card{
+        position:relative;display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+        padding:16px 18px;border-radius:13px;border:1px solid var(--line);
+        background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.008));
+        transition:border-color .22s,background .22s,transform .22s var(--ease);
+        animation:fadeIn .35s var(--ease) both;
+    }
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .code-card:hover{border-color:rgba(255,43,61,.28);background:linear-gradient(180deg,rgba(255,43,61,.05),rgba(255,255,255,.01));transform:translateY(-1px)}
+    .code-card.disabled{opacity:.62}
+    .code-main{flex:1;min-width:230px;display:flex;flex-direction:column;gap:8px}
+    .code-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(47,208,122,.14);flex:none}
+    .status-dot.off{background:var(--muted-2);box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+    .code-text{
+        font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--gold);
+        direction:ltr;letter-spacing:.4px;cursor:pointer;transition:.2s;
+    }
+    .code-text:hover{color:#ffe2a0;text-shadow:0 0 18px rgba(243,201,105,.35)}
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;font-size:10.5px;font-weight:800;border:1px solid transparent}
+    .badge.on{background:rgba(47,208,122,.1);border-color:rgba(47,208,122,.22);color:var(--green)}
+    .badge.off{background:rgba(255,255,255,.05);border-color:var(--line);color:var(--muted)}
+    .badge.exp{background:rgba(245,165,36,.1);border-color:rgba(245,165,36,.25);color:var(--amber)}
+    .code-meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
+    .code-meta span{display:inline-flex;align-items:center;gap:5px}
+    .code-meta i{font-size:10.5px;color:var(--muted-2)}
+    .code-meta b{color:#cfd5e0;font-weight:800;font-variant-numeric:tabular-nums}
+    .usage{display:flex;align-items:center;gap:9px;min-width:130px}
+    .usage-bar{flex:1;height:4px;border-radius:100px;background:rgba(255,255,255,.07);overflow:hidden;min-width:60px}
+    .usage-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#ff3547,#ff7a5c);transition:width .5s var(--ease)}
+    .usage-fill.full{background:linear-gradient(90deg,#f5a524,#ff3547)}
+    .usage-text{font-size:10.5px;font-weight:800;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+    .code-actions{display:flex;gap:6px;flex:none}
+
+    .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 20px;gap:6px}
+    .empty-art{width:78px;height:78px;border-radius:22px;display:grid;place-items:center;font-size:28px;color:var(--muted-2);background:var(--surface);border:1px dashed var(--line-strong);margin-bottom:10px}
+    .empty h4{font-size:15px;font-weight:900}
+    .empty p{font-size:12.5px;color:var(--muted-2);max-width:280px}
+
+    .skeleton{height:82px;border-radius:13px;border:1px solid var(--line);background:linear-gradient(90deg,var(--surface) 25%,var(--surface-2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    .load-more{display:flex;justify-content:center;padding:6px 0 2px}
+
+    /* ============ MODALS ============ */
+    .overlay{
+        position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;padding:20px;
+        background:rgba(3,4,6,.72);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+        opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s;
+    }
+    .overlay.show{opacity:1;visibility:visible}
+    .modal{
+        position:relative;width:100%;max-width:460px;border-radius:18px;border:1px solid var(--line-strong);
+        background:linear-gradient(180deg,#141821,#0c0e13);box-shadow:0 30px 80px rgba(0,0,0,.7);
+        transform:translateY(14px) scale(.98);transition:transform .28s var(--ease);overflow:hidden;
+    }
+    .overlay.show .modal{transform:none}
+    .modal-head{display:flex;align-items:flex-start;gap:14px;padding:22px 22px 0}
+    .modal-ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:17px;flex:none;background:rgba(255,43,61,.12);border:1px solid rgba(255,43,61,.25);color:#ff6b78}
+    .modal-ic.green{background:rgba(47,208,122,.12);border-color:rgba(47,208,122,.25);color:var(--green)}
+    .modal-ic.gold{background:rgba(243,201,105,.12);border-color:rgba(243,201,105,.25);color:var(--gold)}
+    .modal-head h3{font-size:16px;font-weight:900;line-height:1.4}
+    .modal-head p{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.7}
+    .modal-body{padding:18px 22px 4px}
+    .modal-foot{display:flex;gap:10px;padding:18px 22px 22px}
+    .modal-foot .btn{flex:1}
+    .modal-close{position:absolute;top:14px;left:14px;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;display:grid;place-items:center;transition:.2s;z-index:2}
+    .modal-close:hover{color:#fff;background:var(--surface-2)}
+
+    .created-list{display:flex;flex-direction:column;gap:7px;max-height:240px;overflow:auto;margin-top:4px}
+    .created-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:9px;background:rgba(0,0,0,.35);border:1px solid var(--line)}
+    .created-item code{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--gold);direction:ltr}
+    .created-item button{width:28px;height:28px;border-radius:7px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);cursor:pointer;transition:.2s;font-size:11px}
+    .created-item button:hover{color:#fff;background:var(--surface-3)}
+
+    /* ============ TOASTS ============ */
+    .toasts{position:fixed;bottom:22px;left:22px;z-index:9800;display:flex;flex-direction:column;gap:9px;pointer-events:none}
+    .toast{
+        display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:11px;min-width:240px;max-width:340px;
+        background:rgba(20,24,33,.96);border:1px solid var(--line-strong);box-shadow:0 14px 40px rgba(0,0,0,.6);
+        font-size:12.5px;font-weight:700;color:#e6eaf2;backdrop-filter:blur(10px);
+        animation:toastIn .3s var(--ease) both;pointer-events:auto;
+    }
+    .toast.out{animation:toastOut .25s var(--ease) forwards}
+    @keyframes toastIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+    @keyframes toastOut{to{opacity:0;transform:translateX(-16px)}}
+    .toast i{font-size:13px;flex:none}
+    .toast.ok i{color:var(--green)}
+    .toast.err i{color:#ff6b78}
+    .toast.info i{color:#6aa9ff}
+
+    /* ============ MOBILE NAV ============ */
+    .mobile-nav{display:none}
+    .menu-toggle{display:none}
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width:1180px){
+        .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+        .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+        .note-field{grid-column:span 2}
+        .form-submit{grid-column:span 2;width:100%}
+    }
+    @media (max-width:1024px){
+        #login-overlay{grid-template-columns:1fr}
+        .login-visual{display:none}
+        .login-mobile-logo{display:block}
+        .login-panel{padding:32px 22px}
+    }
+    @media (max-width:900px){
+        .sidebar{
+            transform:translateX(100%);transition:transform .3s var(--ease);width:280px;
+            box-shadow:-20px 0 60px rgba(0,0,0,.6);
+        }
+        .sidebar.open{transform:none}
+        .main{margin-right:0}
+        .menu-toggle{display:inline-flex}
+        .topbar{padding:0 18px;height:64px}
+        .content{padding:20px 16px 110px}
+        .mobile-nav{
+            display:flex;position:fixed;bottom:0;left:0;right:0;z-index:130;
+            background:rgba(10,12,16,.94);backdrop-filter:blur(18px);border-top:1px solid var(--line);
+            padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+        }
+        .mobile-nav a{
+            flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0;
+            font-size:9.5px;font-weight:800;color:var(--muted-2);border-radius:9px;transition:.2s;
+        }
+        .mobile-nav a i{font-size:16px}
+        .mobile-nav a.active{color:var(--red)}
+        .toasts{bottom:88px;left:14px;right:14px}
+        .toast{max-width:none}
+    }
+    @media (max-width:640px){
+        .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+        .stat{padding:15px}
+        .stat-value{font-size:22px}
+        .stat-icon{width:34px;height:34px;font-size:13px}
+        .panel-head{padding:16px;flex-wrap:wrap}
+        .panel-body{padding:16px}
+        .codes-toolbar{padding:14px 16px}
+        .codes-list{padding:14px 16px 18px}
+        .search{max-width:none;order:3;flex-basis:100%}
+        .toolbar-end{margin-right:0;flex:1;justify-content:flex-end}
+        .form-grid{grid-template-columns:1fr 1fr;gap:10px}
+        .code-card{padding:14px;gap:12px}
+        .code-main{min-width:0;width:100%}
+        .code-actions{width:100%;justify-content:flex-end;padding-top:11px;border-top:1px dashed rgba(255,255,255,.07)}
+        .usage{width:100%}
+        .code-text{font-size:12.5px}
+        .topbar-title span{display:none}
+        .live-badge span{display:none}
+        .live-badge{padding:7px 9px}
+        .modal-foot{flex-direction:column-reverse}
+        .modal-foot .btn{width:100%}
+        .tabs{width:100%;overflow:auto}
+        .tab{flex:1;justify-content:center;padding:7px 8px;font-size:11px}
+        .tab .n{display:none}
+    }
+    @media (max-width:400px){
+        .stats{grid-template-columns:1fr}
+        .form-grid{grid-template-columns:1fr}
+        .note-field,.form-submit{grid-column:span 1}
+    }
 </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
 </head>
 <body>
 
+<!-- ================= LOGIN ================= -->
 <div id="login-overlay">
-    <div class="login-box">
-        <img src="https://i.imgur.com/kf1AmpO.png" alt="Logo">
-        <h2>Control <span>Nacer_22</span></h2>
-        <p>تسجيل الدخول إلى لوحة التحكم</p>
-        
-        <div class="login-input-group">
-            <i class="fa-solid fa-lock"></i>
-            <input type="password" id="tokenInput" placeholder="أدخل كلمة المرور" onkeypress="handleKeyPress(event)">
+    <section class="login-visual">
+        <div class="lv-top">
+            <img class="lv-logo" src="assets/logo-256.png" alt="Nacer_22">
+            <div>
+                <div class="lv-brand-name">Control <span>Nacer_22</span></div>
+                <div class="lv-brand-sub">Key Management Suite</div>
+            </div>
         </div>
-        
-        <div class="login-error" id="login-error">كلمة المرور غير صحيحة!</div>
-        
-        <button onclick="login()" id="btn-login">
-            <i class="fa-solid fa-right-to-bracket"></i> دخول
-        </button>
-    </div>
+
+        <div class="lv-center">
+            <div class="lv-pill"><span class="dot"></span> نظام إدارة الترخيص</div>
+            <h1>تحكّم كامل في<br><em>مفاتيح الوصول</em></h1>
+            <p>أنشئ الأكواد، حدّد المدة وعدد الأجهزة، وتابع حالة كل ترخيص من مكان واحد — بسرعة وأمان.</p>
+            <div class="lv-features">
+                <div class="lv-feature"><i class="fa-solid fa-bolt"></i> إنشاء أكواد فوري بصلاحيات مخصّصة</div>
+                <div class="lv-feature"><i class="fa-solid fa-shield-halved"></i> حماية بجلسة مشفّرة وتوكن مؤقت</div>
+                <div class="lv-feature"><i class="fa-solid fa-chart-simple"></i> إحصائيات مباشرة لكل الأكواد والأجهزة</div>
+            </div>
+        </div>
+
+        <div class="lv-bottom"><i class="fa-regular fa-copyright"></i> 2026 Nacer_22 — جميع الحقوق محفوظة</div>
+    </section>
+
+    <section class="login-panel">
+        <div class="login-card">
+            <div class="login-mobile-logo">
+                <img src="assets/logo-256.png" alt="Nacer_22">
+            </div>
+            <h2>مرحباً بعودتك <span>👋</span></h2>
+            <p class="sub">سجّل الدخول للمتابعة إلى لوحة التحكم</p>
+
+            <div class="login-error" id="login-error">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span id="login-error-text">كلمة المرور غير صحيحة</span>
+            </div>
+
+            <div class="field">
+                <label for="tokenInput">كلمة مرور الإدارة</label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-lock lead"></i>
+                    <input type="password" id="tokenInput" placeholder="أدخل كلمة المرور" autocomplete="current-password" onkeypress="handleKeyPress(event)">
+                    <button class="eye-btn" type="button" onclick="togglePassword()" aria-label="إظهار كلمة المرور">
+                        <i class="fa-regular fa-eye" id="eye-icon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="login-row">
+                <label class="check"><input type="checkbox" id="rememberMe" checked> إبقاء الجلسة مفتوحة</label>
+                <span class="login-hint"><i class="fa-solid fa-lock"></i> اتصال آمن</span>
+            </div>
+
+            <button class="btn btn-login" onclick="login()" id="btn-login">
+                <i class="fa-solid fa-right-to-bracket"></i> دخول إلى اللوحة
+            </button>
+
+            <div class="login-foot"><i class="fa-solid fa-shield-halved"></i> محمي بواسطة JWT · الجلسة صالحة لمدة ساعة</div>
+        </div>
+    </section>
 </div>
 
+<!-- ================= DASHBOARD ================= -->
 <div id="dashboard-layout">
     <div class="app-layout">
-        <aside class="sidebar">
-            <div class="brand-section">
-                <img src="https://i.imgur.com/kf1AmpO.png" alt="Logo">
-                <h1>Nacer_22</h1>
+
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <img src="assets/logo-256.png" alt="Nacer_22">
+                <div class="brand-text">
+                    <h1>Control <span>Nacer_22</span></h1>
+                    <p>Key Management</p>
+                </div>
             </div>
-            <div class="nav-menu">
-                <a href="#" class="nav-item active"><i class="fa-solid fa-gauge-high"></i> لوحة التحكم</a>
-                <a href="#" class="nav-item"><i class="fa-solid fa-key"></i> الأكواد</a>
-                <a href="#" class="nav-item" onclick="logout()" style="color:var(--error); margin-top:auto;"><i class="fa-solid fa-right-from-bracket"></i> تسجيل خروج</a>
+
+            <div class="nav-label">القائمة الرئيسية</div>
+            <nav class="nav">
+                <a class="nav-item active" data-target="overview" onclick="scrollToSection('overview',this)">
+                    <i class="fa-solid fa-gauge-high"></i> نظرة عامة
+                </a>
+                <a class="nav-item" data-target="create" onclick="scrollToSection('create',this)">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> إنشاء أكواد
+                </a>
+                <a class="nav-item" data-target="codes" onclick="scrollToSection('codes',this)">
+                    <i class="fa-solid fa-key"></i> الأكواد المسجّلة
+                    <span class="count" id="nav-count">0</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-foot">
+                <div class="user-card">
+                    <div class="user-avatar">N</div>
+                    <div class="user-meta">
+                        <b>Nacer_22</b>
+                        <span>مدير النظام</span>
+                    </div>
+                    <button class="icon-btn danger" onclick="logout()" title="تسجيل الخروج">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
             </div>
         </aside>
 
-        <main class="main-content">
-            <div class="panel-card">
-                <div class="panel-header">
-                    <div class="panel-title"><i class="fa-solid fa-plus-circle"></i> إنشاء أكواد جديدة</div>
+        <div class="main">
+            <header class="topbar">
+                <button class="icon-btn menu-toggle" onclick="toggleSidebar()" aria-label="القائمة">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="topbar-title">
+                    <h2>لوحة التحكم</h2>
+                    <span id="today-date">—</span>
                 </div>
-                <div class="create-form">
-                    <div class="input-group"><label>المدة</label><input type="number" id="dur" value="24" min="1"></div>
-                    <div class="input-group"><label>الوحدة</label><select id="time_unit"><option value="hours">ساعة</option><option value="days">يوم</option><option value="weeks">أسبوع</option><option value="months">شهر</option></select></div>
-                    <div class="input-group"><label>عدد المفاتيح</label><input type="number" id="cnt" value="1" min="1"></div>
-                    <div class="input-group"><label>عدد الأجهزة</label><input type="number" id="dev" value="1" min="1"></div>
-                    <div class="input-group"><button onclick="createCode()" id="btn-create" style="width:100%;"><i class="fa-solid fa-bolt"></i> إنشاء</button></div>
+                <div class="topbar-actions">
+                    <span class="live-badge"><i class="fa-solid fa-circle"></i> <span>متصل</span></span>
+                    <button class="icon-btn" onclick="refreshAll()" title="تحديث البيانات">
+                        <i class="fa-solid fa-rotate" id="refresh-icon"></i>
+                    </button>
                 </div>
-            </div>
+            </header>
 
-            <div class="panel-card">
-                <div class="panel-header">
-                    <div class="panel-title"><i class="fa-solid fa-list-ul"></i> الأكواد المسجلة</div>
-                    <button class="btn-dark" style="padding: 8px 15px; font-size: 13px;" onclick="confirmDeleteAll()"><i class="fa-solid fa-trash"></i> حذف الكل</button>
-                </div>
-                
-                <div class="search-input">
-                    <input type="text" id="searchInput" placeholder="ابحث عن كود..." oninput="filterCodes()">
-                    <i class="fa-solid fa-search"></i>
-                </div>
+            <main class="content">
 
-                <div class="key-list" id="codes-container"></div>
-            </div>
-            <div id="status-msg"></div>
-        </main>
+                <!-- stats -->
+                <section class="stats" id="overview">
+                    <div class="stat">
+                        <div class="stat-top">
+                            <div class="stat-icon"><i class="fa-solid fa-key"></i></div>
+                            <span class="stat-trend"><i class="fa-solid fa-layer-group"></i> الإجمالي</span>
+                        </div>
+                        <div class="stat-value" id="st-total">0</div>
+                        <div class="stat-label">إجمالي الأكواد</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-top">
+                            <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                            <span class="stat-trend" id="st-active-pct">0%</span>
+                        </div>
+                        <div class="stat-value" id="st-active">0</div>
+                        <div class="stat-label">أكواد مفعّلة</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-top">
+                            <div class="stat-icon gold"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                            <span class="stat-trend"><i class="fa-solid fa-users"></i> مستخدم</span>
+                        </div>
+                        <div class="stat-value" id="st-used">0</div>
+                        <div class="stat-label">أجهزة مفعّلة</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-top">
+                            <div class="stat-icon grey"><i class="fa-solid fa-plug-circle-xmark"></i></div>
+                            <span class="stat-trend">تحتاج مراجعة</span>
+                        </div>
+                        <div class="stat-value" id="st-full">0</div>
+                        <div class="stat-label">أكواد مكتملة السعة</div>
+                    </div>
+                </section>
+
+                <!-- create -->
+                <section class="panel" id="create">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            <div class="ic"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                            <div>
+                                إنشاء أكواد جديدة
+                                <small>حدّد المدة والسعة ثم أنشئ دفعة أكواد بضغطة واحدة</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="presets">
+                            <button class="preset active" data-dur="24" data-unit="hours" onclick="applyPreset(this)">24 ساعة</button>
+                            <button class="preset" data-dur="7" data-unit="days" onclick="applyPreset(this)">أسبوع</button>
+                            <button class="preset" data-dur="1" data-unit="months" onclick="applyPreset(this)">شهر</button>
+                            <button class="preset" data-dur="3" data-unit="months" onclick="applyPreset(this)">3 أشهر</button>
+                            <button class="preset" data-dur="1" data-unit="years" onclick="applyPreset(this)">سنة</button>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="field">
+                                <label><i class="fa-regular fa-clock"></i> المدة</label>
+                                <input class="control" type="number" id="dur" value="24" min="1" inputmode="numeric">
+                            </div>
+                            <div class="field">
+                                <label><i class="fa-solid fa-ruler"></i> الوحدة</label>
+                                <select class="control" id="time_unit">
+                                    <option value="hours">ساعة</option>
+                                    <option value="days">يوم</option>
+                                    <option value="weeks">أسبوع</option>
+                                    <option value="months">شهر</option>
+                                    <option value="years">سنة</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label><i class="fa-solid fa-hashtag"></i> عدد الأكواد</label>
+                                <input class="control" type="number" id="cnt" value="1" min="1" max="200" inputmode="numeric">
+                            </div>
+                            <div class="field">
+                                <label><i class="fa-solid fa-mobile-screen"></i> عدد الأجهزة</label>
+                                <input class="control" type="number" id="dev" value="1" min="1" max="50" inputmode="numeric">
+                            </div>
+                            <div class="field note-field">
+                                <label><i class="fa-regular fa-note-sticky"></i> ملاحظة (اختياري)</label>
+                                <input class="control" type="text" id="note" placeholder="مثال: دفعة عملاء تيليجرام" maxlength="80">
+                            </div>
+                            <div class="field">
+                                <button class="btn form-submit" onclick="createCode()" id="btn-create">
+                                    <i class="fa-solid fa-bolt"></i> إنشاء
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-hint">
+                            <i class="fa-solid fa-circle-info"></i>
+                            سيتم توليد أكواد فريدة بصيغة <b style="color:var(--gold);font-family:'JetBrains Mono',monospace">Nacer-XXXX-XXXX-XXXX</b> — تُفعّل تلقائياً عند أول استخدام.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- codes -->
+                <section class="panel" id="codes">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            <div class="ic"><i class="fa-solid fa-list-check"></i></div>
+                            <div>
+                                الأكواد المسجّلة
+                                <small id="codes-subtitle">جارٍ تحميل البيانات…</small>
+                            </div>
+                        </div>
+                        <div class="panel-head-actions">
+                            <button class="icon-btn" onclick="exportCSV()" title="تصدير CSV"><i class="fa-solid fa-file-arrow-down"></i></button>
+                            <button class="btn btn-danger-soft" style="padding:8px 14px;font-size:12px" onclick="confirmDeleteAll()">
+                                <i class="fa-solid fa-trash"></i> حذف الكل
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="codes-toolbar">
+                        <div class="tabs" id="filter-tabs">
+                            <button class="tab active" data-filter="all" onclick="setFilter('all',this)">الكل <span class="n" id="n-all">0</span></button>
+                            <button class="tab" data-filter="active" onclick="setFilter('active',this)">مفعّلة <span class="n" id="n-active">0</span></button>
+                            <button class="tab" data-filter="disabled" onclick="setFilter('disabled',this)">معطّلة <span class="n" id="n-disabled">0</span></button>
+                            <button class="tab" data-filter="full" onclick="setFilter('full',this)">مكتملة <span class="n" id="n-full">0</span></button>
+                        </div>
+                        <div class="search">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="searchInput" placeholder="ابحث عن كود أو ملاحظة…" oninput="onSearch()">
+                        </div>
+                        <div class="toolbar-end">
+                            <button class="icon-btn" onclick="refreshAll()" title="تحديث"><i class="fa-solid fa-arrows-rotate"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="codes-list" id="codes-container"></div>
+                </section>
+
+            </main>
+        </div>
     </div>
-</div><script>
-    const API = "https://key-system-yn0o.onrender.com"; 
-    let allCodes = [];
-    let authToken = sessionStorage.getItem('adminToken') || "";
 
-    window.onload = () => {
+    <nav class="mobile-nav">
+        <a class="active" onclick="scrollToSection('overview',this)"><i class="fa-solid fa-gauge-high"></i> نظرة عامة</a>
+        <a onclick="scrollToSection('create',this)"><i class="fa-solid fa-wand-magic-sparkles"></i> إنشاء</a>
+        <a onclick="scrollToSection('codes',this)"><i class="fa-solid fa-key"></i> الأكواد</a>
+        <a onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> خروج</a>
+    </nav>
+</div>
+
+<!-- confirm modal -->
+<div class="overlay" id="confirm-overlay">
+    <div class="modal">
+        <div class="modal-head">
+            <div class="modal-ic" id="confirm-ic"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div>
+                <h3 id="confirm-title">تأكيد العملية</h3>
+                <p id="confirm-text">هل أنت متأكد؟</p>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="closeConfirm()">إلغاء</button>
+            <button class="btn" id="confirm-ok" onclick="runConfirm()">تأكيد</button>
+        </div>
+    </div>
+</div>
+
+<!-- created codes modal -->
+<div class="overlay" id="created-overlay">
+    <div class="modal">
+        <button class="modal-close" onclick="closeCreated()"><i class="fa-solid fa-xmark"></i></button>
+        <div class="modal-head">
+            <div class="modal-ic green"><i class="fa-solid fa-circle-check"></i></div>
+            <div>
+                <h3>تم إنشاء الأكواد بنجاح</h3>
+                <p id="created-sub">—</p>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="created-list" id="created-list"></div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="closeCreated()">إغلاق</button>
+            <button class="btn" onclick="copyAllCreated()"><i class="fa-regular fa-copy"></i> نسخ الكل</button>
+        </div>
+    </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+    const API = "https://key-system-yn0o.onrender.com";
+    const PAGE_SIZE = 8;
+
+    let allCodes = [];
+    let filteredCodes = [];
+    let currentFilter = 'all';
+    let searchTerm = '';
+    let visibleCount = PAGE_SIZE;
+    let authToken = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken') || "";
+    let lastCreated = [];
+    let confirmCallback = null;
+
+    /* ---------- boot ---------- */
+    window.addEventListener('load', () => {
+        document.getElementById('today-date').textContent =
+            new Date().toLocaleDateString('ar-EG', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
         if (authToken) {
             showDashboard();
             fetchCodes();
         }
-    };
+    });
 
-    function handleKeyPress(e) {
-        if (e.key === 'Enter') login();
+    /* ---------- login ---------- */
+    function handleKeyPress(e){ if(e.key === 'Enter') login(); }
+
+    function togglePassword(){
+        const inp = document.getElementById('tokenInput');
+        const icon = document.getElementById('eye-icon');
+        if(inp.type === 'password'){ inp.type = 'text'; icon.className = 'fa-regular fa-eye-slash'; }
+        else { inp.type = 'password'; icon.className = 'fa-regular fa-eye'; }
     }
 
-    async function login() {
-        const inputVal = document.getElementById('tokenInput').value.trim();
-        const errorMsg = document.getElementById('login-error');
-        const btn = document.getElementById('btn-login');
-        const originalText = btn.innerHTML;
+    function showLoginError(msg){
+        document.getElementById('login-error-text').textContent = msg;
+        document.getElementById('login-error').classList.add('show');
+    }
 
-        if (!inputVal) {
-            errorMsg.innerText = "يرجى إدخال كلمة المرور";
-            errorMsg.classList.add('show');
+    async function login(){
+        const input = document.getElementById('tokenInput');
+        const val = input.value.trim();
+        const btn = document.getElementById('btn-login');
+        const err = document.getElementById('login-error');
+
+        if(!val){
+            showLoginError('يرجى إدخال كلمة المرور للمتابعة');
+            input.focus();
             return;
         }
 
+        err.classList.remove('show');
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحقق...';
-        errorMsg.classList.remove('show');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ التحقق…';
 
-        try {
+        try{
             const res = await fetch(`${API}/api/admin/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: inputVal })
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ password: val })
             });
 
-            if (res.ok) {
+            if(res.ok){
                 const data = await res.json();
                 authToken = data.token;
-                sessionStorage.setItem('adminToken', authToken);
+                const remember = document.getElementById('rememberMe').checked;
+                if(remember) localStorage.setItem('adminToken', authToken);
+                else sessionStorage.setItem('adminToken', authToken);
+                input.value = '';
                 showDashboard();
                 fetchCodes();
+            } else if(res.status === 401){
+                showLoginError('كلمة المرور غير صحيحة، حاول مرة أخرى');
             } else {
-                errorMsg.innerText = "كلمة المرور غير صحيحة!";
-                errorMsg.classList.add('show');
+                showLoginError('تعذّر تسجيل الدخول، يرجى المحاولة لاحقاً');
             }
-        } catch (err) {
-            errorMsg.innerText = "تعذر الاتصال بالسيرفر، يرجى المحاولة لاحقاً.";
-            errorMsg.classList.add('show');
-        } finally {
+        }catch(e){
+            showLoginError('تعذّر الاتصال بالخادم — قد يكون في وضع السكون، أعد المحاولة');
+        }finally{
             btn.disabled = false;
-            btn.innerHTML = originalText;
+            btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى اللوحة';
         }
     }
 
-    function showDashboard() {
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('dashboard-layout').style.display = 'block';
+    function showDashboard(){
+        document.getElementById('login-overlay').classList.add('hidden');
+        document.getElementById('dashboard-layout').classList.add('ready');
     }
 
-    function logout() {
+    function logout(){
+        localStorage.removeItem('adminToken');
         sessionStorage.removeItem('adminToken');
         authToken = "";
         window.location.reload();
     }
 
-    function showMsg(msg, isError = false) {
-        const status = document.getElementById('status-msg');
-        status.innerText = msg;
-        status.style.color = isError ? "var(--error)" : "var(--success)";
-        status.style.background = isError ? "rgba(239,68,68,0.1)" : "rgba(34,197,94,0.1)";
-        status.style.borderColor = isError ? "rgba(239,68,68,0.2)" : "rgba(34,197,94,0.2)";
-        status.style.display = 'block';
-        setTimeout(() => { status.style.display = 'none'; }, 4000);
+    /* ---------- helpers ---------- */
+    function getHeaders(){
+        return { 'Content-Type':'application/json', 'Authorization':`Bearer ${authToken}` };
     }
 
-    function getHeaders() {
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-        };
+    function toast(msg, type='ok'){
+        const wrap = document.getElementById('toasts');
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        const icons = { ok:'fa-circle-check', err:'fa-circle-exclamation', info:'fa-circle-info' };
+        el.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><span>${msg}</span>`;
+        wrap.appendChild(el);
+        setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 260); }, 3200);
     }
 
-    async function fetchCodes() {
-        try {
+    function fmtDuration(h){
+        if(h === 0) return 'دائم';
+        if(h < 1) return `${Math.round(h*60)} دقيقة`;
+        if(h < 24) return `${+h.toFixed(1)} ساعة`;
+        const d = h/24;
+        if(d < 30) return `${+d.toFixed(1)} يوم`;
+        const m = d/30;
+        if(m < 12) return `${+m.toFixed(1)} شهر`;
+        return `${+(m/12).toFixed(1)} سنة`;
+    }
+
+    function fmtDate(v){
+        if(!v) return '—';
+        const d = new Date(v);
+        if(isNaN(d)) return '—';
+        return d.toLocaleDateString('en-CA');
+    }
+
+    function escapeHtml(s){
+        return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function copyText(text, label){
+        const done = () => toast(label || 'تم النسخ إلى الحافظة');
+        if(navigator.clipboard && window.isSecureContext){
+            navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+        } else fallbackCopy(text, done);
+    }
+    function fallbackCopy(text, cb){
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); cb(); }catch(e){ toast('تعذّر النسخ', 'err'); }
+        ta.remove();
+    }
+
+    /* ---------- confirm modal ---------- */
+    function openConfirm({title, text, okText='تأكيد', danger=true, icon='fa-triangle-exclamation', onOk}){
+        document.getElementById('confirm-title').textContent = title;
+        document.getElementById('confirm-text').textContent = text;
+        document.getElementById('confirm-ok').textContent = okText;
+        const ic = document.getElementById('confirm-ic');
+        ic.className = 'modal-ic' + (danger ? '' : ' gold');
+        ic.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+        confirmCallback = onOk;
+        document.getElementById('confirm-overlay').classList.add('show');
+    }
+    function closeConfirm(){
+        document.getElementById('confirm-overlay').classList.remove('show');
+        confirmCallback = null;
+    }
+    function runConfirm(){
+        const cb = confirmCallback;
+        closeConfirm();
+        if(cb) cb();
+    }
+
+    /* ---------- created modal ---------- */
+    function showCreated(codes){
+        lastCreated = codes;
+        document.getElementById('created-sub').textContent = `تم توليد ${codes.length} كود — جاهزة للاستخدام`;
+        document.getElementById('created-list').innerHTML = codes.map(c => `
+            <div class="created-item">
+                <code>${escapeHtml(c)}</code>
+                <button onclick="copyText('${escapeHtml(c)}')" title="نسخ"><i class="fa-regular fa-copy"></i></button>
+            </div>`).join('');
+        document.getElementById('created-overlay').classList.add('show');
+    }
+    function closeCreated(){ document.getElementById('created-overlay').classList.remove('show'); }
+    function copyAllCreated(){
+        if(!lastCreated.length) return;
+        copyText(lastCreated.join('\n'), `تم نسخ ${lastCreated.length} كود`);
+    }
+
+    /* ---------- nav ---------- */
+    function scrollToSection(id, el){
+        document.getElementById(id).scrollIntoView({behavior:'smooth', block:'start'});
+        document.querySelectorAll('.nav-item, .mobile-nav a').forEach(n => n.classList.remove('active'));
+        if(el) el.classList.add('active');
+        document.getElementById('sidebar').classList.remove('open');
+    }
+    function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); }
+
+    /* ---------- data ---------- */
+    async function refreshAll(){
+        const icon = document.getElementById('refresh-icon');
+        icon.classList.add('fa-spin');
+        await fetchCodes();
+        setTimeout(() => icon.classList.remove('fa-spin'), 500);
+    }
+
+    async function fetchCodes(){
+        const container = document.getElementById('codes-container');
+        if(!allCodes.length){
+            container.innerHTML = Array.from({length:3}).map(() => '<div class="skeleton"></div>').join('');
+        }
+        try{
             const res = await fetch(`${API}/api/admin/codes`, { headers: getHeaders() });
-            
-            if (res.status === 401 || res.status === 403) {
-                logout();
-                return;
-            }
-            
-            if(res.ok) {
-                allCodes = await res.json();
-                renderCodes(allCodes);
-            }
-        } catch(err) {
-            showMsg("تعذر جلب البيانات (السيرفر قد يكون نائماً).", true);
+            if(res.status === 401 || res.status === 403){ logout(); return; }
+            if(!res.ok) throw new Error('bad status');
+            allCodes = await res.json();
+            updateStats();
+            applyFilters();
+        }catch(e){
+            container.innerHTML = `
+                <div class="empty">
+                    <div class="empty-art"><i class="fa-solid fa-plug-circle-xmark"></i></div>
+                    <h4>تعذّر جلب البيانات</h4>
+                    <p>قد يكون الخادم في وضع السكون. اضغط تحديث للمحاولة مرة أخرى.</p>
+                    <button class="btn btn-ghost" style="margin-top:14px" onclick="refreshAll()"><i class="fa-solid fa-rotate"></i> إعادة المحاولة</button>
+                </div>`;
+            document.getElementById('codes-subtitle').textContent = 'غير متصل';
+            toast('تعذّر الاتصال بالخادم', 'err');
         }
     }
 
-    function renderCodes(codesToRender) {
+    function updateStats(){
+        const total = allCodes.length;
+        const active = allCodes.filter(c => c.is_active === 1).length;
+        const used = allCodes.reduce((s,c) => s + (c.used || 0), 0);
+        const full = allCodes.filter(c => (c.used || 0) >= c.max_devices).length;
+
+        document.getElementById('st-total').textContent = total;
+        document.getElementById('st-active').textContent = active;
+        document.getElementById('st-used').textContent = used;
+        document.getElementById('st-full').textContent = full;
+        document.getElementById('st-active-pct').textContent = total ? Math.round(active/total*100) + '%' : '0%';
+        document.getElementById('nav-count').textContent = total;
+        document.getElementById('n-all').textContent = total;
+        document.getElementById('n-active').textContent = active;
+        document.getElementById('n-disabled').textContent = total - active;
+        document.getElementById('n-full').textContent = full;
+        document.getElementById('codes-subtitle').textContent =
+            total ? `${total} كود · ${used} جهاز مفعّل` : 'لا توجد أكواد بعد';
+    }
+
+    function setFilter(f, el){
+        currentFilter = f;
+        visibleCount = PAGE_SIZE;
+        document.querySelectorAll('#filter-tabs .tab').forEach(t => t.classList.remove('active'));
+        if(el) el.classList.add('active');
+        applyFilters();
+    }
+
+    function onSearch(){
+        searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+        visibleCount = PAGE_SIZE;
+        applyFilters();
+    }
+
+    function applyFilters(){
+        filteredCodes = allCodes.filter(c => {
+            if(currentFilter === 'active' && c.is_active !== 1) return false;
+            if(currentFilter === 'disabled' && c.is_active === 1) return false;
+            if(currentFilter === 'full' && (c.used || 0) < c.max_devices) return false;
+            if(searchTerm){
+                const hay = `${c.code} ${c.note || ''}`.toLowerCase();
+                if(!hay.includes(searchTerm)) return false;
+            }
+            return true;
+        });
+        renderCodes();
+    }
+
+    function renderCodes(){
         const container = document.getElementById('codes-container');
         container.innerHTML = '';
 
-        if (codesToRender.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:#666; padding:20px; font-weight:bold;">لا توجد أكواد حالياً</div>';
+        if(!filteredCodes.length){
+            const isSearch = !!searchTerm;
+            container.innerHTML = `
+                <div class="empty">
+                    <div class="empty-art"><i class="fa-solid ${isSearch ? 'fa-magnifying-glass' : 'fa-key'}"></i></div>
+                    <h4>${isSearch ? 'لا توجد نتائج مطابقة' : 'لا توجد أكواد حالياً'}</h4>
+                    <p>${isSearch ? 'جرّب كلمة بحث أخرى أو غيّر التصنيف.' : 'ابدأ بإنشاء أول كود من النموذج أعلاه وسيظهر هنا مباشرة.'}</p>
+                </div>`;
             return;
         }
 
-        codesToRender.forEach(c => {
-            let durationText = c.duration_hours >= 1 ? `${c.duration_hours} ساعة` : `${Math.round(c.duration_hours * 60)} دقيقة`;
-            let isActive = c.is_active === 1;
-            let badgeClass = isActive ? 'badge-active' : 'badge-disabled';
-            let badgeText = isActive ? 'مفعل' : 'معطل';
+        const slice = filteredCodes.slice(0, visibleCount);
+
+        slice.forEach((c, i) => {
+            const active = c.is_active === 1;
+            const used = c.used || 0;
+            const max = c.max_devices || 1;
+            const pct = Math.min(100, Math.round(used / max * 100));
+            const full = used >= max;
+            const dur = fmtDuration(c.duration_hours);
 
             const card = document.createElement('div');
-            card.className = 'key-row';
+            card.className = 'code-card' + (active ? '' : ' disabled');
+            card.style.animationDelay = (i * 25) + 'ms';
             card.innerHTML = `
-                <div class="key-main-info">
-                    <div class="key-code">${c.code}</div>
-                    <div class="key-badge ${badgeClass}">${badgeText}</div>
+                <div class="code-main">
+                    <div class="code-line">
+                        <span class="status-dot ${active ? '' : 'off'}"></span>
+                        <span class="code-text" onclick="copyText('${escapeHtml(c.code)}', 'تم نسخ الكود')" title="اضغط للنسخ">${escapeHtml(c.code)}</span>
+                        <span class="badge ${active ? 'on' : 'off'}">
+                            <i class="fa-solid ${active ? 'fa-circle-check' : 'fa-circle-pause'}"></i>${active ? 'مفعّل' : 'معطّل'}
+                        </span>
+                        ${full ? '<span class="badge exp"><i class="fa-solid fa-users"></i> مكتمل السعة</span>' : ''}
+                    </div>
+                    <div class="code-meta">
+                        <span><i class="fa-regular fa-clock"></i> <b>${dur}</b></span>
+                        <span><i class="fa-solid fa-mobile-screen"></i> <b>${max}</b> جهاز</span>
+                        <span><i class="fa-regular fa-calendar-plus"></i> ${fmtDate(c.created_at)}</span>
+                        ${c.note ? `<span><i class="fa-regular fa-note-sticky"></i> ${escapeHtml(c.note)}</span>` : ''}
+                    </div>
                 </div>
-                <div class="key-stats">
-                    <span><i class="fa-regular fa-clock"></i> ${durationText}</span>
-                    <span><i class="fa-solid fa-mobile-screen"></i> أجهزة: ${c.max_devices}</span>
-                    <span><i class="fa-solid fa-users"></i> مستخدم: ${c.used}</span>
+
+                <div class="usage" title="الأجهزة المستخدمة">
+                    <div class="usage-bar"><div class="usage-fill ${full ? 'full' : ''}" style="width:${pct}%"></div></div>
+                    <span class="usage-text">${used}/${max}</span>
                 </div>
-                <div class="key-actions">
-                    <button class="btn-blue" onclick="copyCode('${c.code}')" title="نسخ"><i class="fa-regular fa-copy"></i></button>
-                    <button class="btn-gold" onclick="resetDevice(${c.id})" title="ريسيت"><i class="fa-solid fa-rotate-right"></i></button>
-                    <button class="btn-del" onclick="deleteCode(${c.id})" title="حذف"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            `;
+
+                <div class="code-actions">
+                    <button class="icon-btn" onclick="copyText('${escapeHtml(c.code)}', 'تم نسخ الكود')" title="نسخ الكود"><i class="fa-regular fa-copy"></i></button>
+                    <button class="icon-btn ${active ? 'gold' : 'green'}" onclick="toggleActive(${c.id}, ${active ? 0 : 1})" title="${active ? 'تعطيل' : 'تفعيل'}">
+                        <i class="fa-solid ${active ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
+                    </button>
+                    <button class="icon-btn gold" onclick="resetDevice(${c.id})" title="إعادة تعيين الأجهزة"><i class="fa-solid fa-rotate-right"></i></button>
+                    <button class="icon-btn danger" onclick="deleteCode(${c.id})" title="حذف"><i class="fa-regular fa-trash-can"></i></button>
+                </div>`;
             container.appendChild(card);
         });
+
+        if(filteredCodes.length > visibleCount){
+            const wrap = document.createElement('div');
+            wrap.className = 'load-more';
+            wrap.innerHTML = `<button class="btn btn-ghost" onclick="loadMore()">
+                عرض المزيد (${filteredCodes.length - visibleCount})
+                <i class="fa-solid fa-chevron-down"></i></button>`;
+            container.appendChild(wrap);
+        }
     }
 
-    function filterCodes() {
-        const term = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = allCodes.filter(c => c.code.toLowerCase().includes(term));
-        renderCodes(filtered);
+    function loadMore(){ visibleCount += PAGE_SIZE; renderCodes(); }
+
+    /* ---------- create ---------- */
+    function applyPreset(el){
+        document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('dur').value = el.dataset.dur;
+        document.getElementById('time_unit').value = el.dataset.unit;
     }
 
-    async function createCode() {
+    async function createCode(){
         const btn = document.getElementById('btn-create');
-        const originalHTML = btn.innerHTML;
-        
         const dur = +document.getElementById('dur').value;
         const unit = document.getElementById('time_unit').value;
         const count = +document.getElementById('cnt').value;
         const devices = +document.getElementById('dev').value;
+        const note = document.getElementById('note').value.trim();
 
-        if(dur <= 0 || count <= 0 || devices <= 0) {
-            return showMsg("يرجى إدخال قيم صحيحة أكبر من صفر", true);
+        if(!dur || dur <= 0 || !count || count <= 0 || !devices || devices <= 0){
+            return toast('يرجى إدخال قيم صحيحة أكبر من صفر', 'err');
         }
+        if(count > 200) return toast('الحد الأقصى 200 كود في الدفعة الواحدة', 'err');
 
-        let hours = dur;
-        if (unit === 'days') hours *= 24;
-        if (unit === 'weeks') hours *= 168;
-        if (unit === 'months') hours *= 720;
+        const multipliers = { hours:1, days:24, weeks:168, months:720, years:8760 };
+        const hours = dur * (multipliers[unit] || 1);
 
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ الإنشاء…';
 
-        try {
-            const res = await fetch(`${API}/api/admin/codes`, { 
-                method: 'POST', 
-                headers: getHeaders(), 
-                body: JSON.stringify({ duration_hours: hours, max_devices: devices, count: count }) 
+        try{
+            const res = await fetch(`${API}/api/admin/codes`, {
+                method:'POST',
+                headers:getHeaders(),
+                body: JSON.stringify({ duration_hours: hours, max_devices: devices, count, note })
             });
-            
-            if(res.ok) {
-                showMsg(`تم إنشاء ${count} مفاتيح بنجاح`);
-                document.getElementById('cnt').value = "1";
+
+            if(res.ok){
+                const data = await res.json();
+                const created = data.created || [];
+                document.getElementById('cnt').value = '1';
+                document.getElementById('note').value = '';
+                toast(`تم إنشاء ${created.length} كود بنجاح`);
+                if(created.length) showCreated(created);
                 fetchCodes();
-            } else if (res.status === 401 || res.status === 403) {
+            } else if(res.status === 401 || res.status === 403){
                 logout();
             } else {
-                showMsg("حدث خطأ أثناء الإنشاء", true);
+                toast('حدث خطأ أثناء إنشاء الأكواد', 'err');
             }
-        } catch(err) {
-            showMsg("تعذر الاتصال بالسيرفر", true);
-        } finally {
+        }catch(e){
+            toast('تعذّر الاتصال بالخادم', 'err');
+        }finally{
             btn.disabled = false;
-            btn.innerHTML = originalHTML;
+            btn.innerHTML = '<i class="fa-solid fa-bolt"></i> إنشاء';
         }
     }
 
-    function copyCode(code) {
-        navigator.clipboard.writeText(code).then(() => {
-            showMsg("تم نسخ الكود: " + code);
+    /* ---------- actions ---------- */
+    async function toggleActive(id, newState){
+        try{
+            const res = await fetch(`${API}/api/admin/codes/${id}`, {
+                method:'PATCH', headers:getHeaders(), body: JSON.stringify({ is_active: !!newState })
+            });
+            if(res.status === 401 || res.status === 403){ logout(); return; }
+            if(res.ok){
+                toast(newState ? 'تم تفعيل الكود' : 'تم تعطيل الكود');
+                fetchCodes();
+            } else toast('تعذّر تحديث حالة الكود', 'err');
+        }catch(e){ toast('تعذّر الاتصال بالخادم', 'err'); }
+    }
+
+    function deleteCode(id){
+        openConfirm({
+            title:'حذف الكود',
+            text:'سيتم حذف الكود وجميع تفعيلاته نهائياً. لا يمكن التراجع عن هذه العملية.',
+            okText:'حذف نهائي',
+            onOk: async () => {
+                try{
+                    const res = await fetch(`${API}/api/admin/codes/${id}`, { method:'DELETE', headers:getHeaders() });
+                    if(res.status === 401 || res.status === 403){ logout(); return; }
+                    if(res.ok){ toast('تم حذف الكود'); fetchCodes(); }
+                    else toast('تعذّر حذف الكود', 'err');
+                }catch(e){ toast('تعذّر الاتصال بالخادم', 'err'); }
+            }
         });
     }
 
-    async function deleteCode(id) {
-        if(!confirm("هل أنت متأكد من حذف هذا الكود؟")) return;
-        try {
-            const res = await fetch(`${API}/api/admin/codes/${id}`, { method: 'DELETE', headers: getHeaders() });
-            if (res.status === 401 || res.status === 403) { logout(); return; }
-            if(res.ok) fetchCodes();
-        } catch(e) { showMsg("حدث خطأ", true); }
-    }
-
-    async function resetDevice(id) {
-        if(!confirm("هل أنت متأكد من إعادة تعيين هذا المفتاح (فصل الأجهزة)؟")) return;
-        try {
-            const res = await fetch(`${API}/api/admin/codes/${id}/reset`, { method: 'DELETE', headers: getHeaders() });
-            if (res.status === 401 || res.status === 403) { logout(); return; }
-            if(res.ok) showMsg("تم إعادة التعيين بنجاح");
-        } catch(e) { showMsg("حدث خطأ", true); }
-    }
-
-    async function confirmDeleteAll() {
-        if(!confirm("تحذير: سيتم حذف جميع الأكواد نهائياً! هل أنت متأكد؟")) return;
-        try {
-            const res = await fetch(`${API}/api/admin/codes`, { headers: getHeaders() });
-            if (res.status === 401 || res.status === 403) { logout(); return; }
-            
-            const rows = await res.json();
-            for (let c of rows) {
-                await fetch(`${API}/api/admin/codes/${c.id}`, { method: 'DELETE', headers: getHeaders() });
+    function resetDevice(id){
+        openConfirm({
+            title:'إعادة تعيين الأجهزة',
+            text:'سيتم فصل جميع الأجهزة المرتبطة بهذا الكود، مع بقاء الكود صالحاً للاستخدام من جديد.',
+            okText:'إعادة تعيين',
+            icon:'fa-rotate-right',
+            onOk: async () => {
+                try{
+                    const res = await fetch(`${API}/api/admin/codes/${id}/reset`, { method:'DELETE', headers:getHeaders() });
+                    if(res.status === 401 || res.status === 403){ logout(); return; }
+                    if(res.ok){ toast('تم إعادة تعيين الأجهزة بنجاح'); fetchCodes(); }
+                    else toast('تعذّر إعادة التعيين', 'err');
+                }catch(e){ toast('تعذّر الاتصال بالخادم', 'err'); }
             }
-            showMsg("تم حذف جميع الأكواد");
-            fetchCodes();
-        } catch(e) { showMsg("حدث خطأ أثناء الحذف", true); }
+        });
     }
+
+    function confirmDeleteAll(){
+        if(!allCodes.length) return toast('لا توجد أكواد لحذفها', 'info');
+        openConfirm({
+            title:'حذف جميع الأكواد',
+            text:`سيتم حذف ${allCodes.length} كود وكل سجلات التفعيل نهائياً. هذه العملية غير قابلة للتراجع.`,
+            okText:'حذف الكل',
+            onOk: async () => {
+                try{
+                    for(const c of [...allCodes]){
+                        await fetch(`${API}/api/admin/codes/${c.id}`, { method:'DELETE', headers:getHeaders() });
+                    }
+                    toast('تم حذف جميع الأكواد');
+                    fetchCodes();
+                }catch(e){ toast('حدث خطأ أثناء الحذف', 'err'); }
+            }
+        });
+    }
+
+    function exportCSV(){
+        if(!allCodes.length) return toast('لا توجد بيانات للتصدير', 'info');
+        const rows = [['code','duration_hours','max_devices','used','status','created_at','note']];
+        allCodes.forEach(c => rows.push([
+            c.code, c.duration_hours, c.max_devices, c.used || 0,
+            c.is_active === 1 ? 'active' : 'disabled', fmtDate(c.created_at), (c.note || '').replace(/"/g,'""')
+        ]));
+        const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+        const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `nacer22-codes-${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        toast('تم تصدير الملف بنجاح');
+    }
+
+    /* close overlays on backdrop / esc */
+    document.querySelectorAll('.overlay').forEach(o => {
+        o.addEventListener('click', e => { if(e.target === o){ o.classList.remove('show'); } });
+    });
+    document.addEventListener('keydown', e => {
+        if(e.key === 'Escape') document.querySelectorAll('.overlay.show').forEach(o => o.classList.remove('show'));
+    });
+
+    /* auto refresh every 60s */
+    setInterval(() => { if(authToken && document.visibilityState === 'visible') fetchCodes(); }, 60000);
 </script>
 </body>
 </html>
