@@ -92,7 +92,8 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
     if (act) {
         if (new Date(act.expires_at) < new Date())
             return res.json({ valid: false, reason: "expired" });
-        return res.json({ valid: true, expires_at: act.expires_at });
+        const token = jwt.sign({ role: 'user', code_id: row.id, device_id }, JWT_SECRET, { expiresIn: '12h' });
+        return res.json({ valid: true, expires_at: act.expires_at, token });
     }
 
     const count = db.prepare("SELECT COUNT(*) AS c FROM activations WHERE code_id = ?").get(row.id).c;
@@ -103,7 +104,37 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
         : new Date(Date.now() + row.duration_hours * 3600 * 1000).toISOString();
 
     db.prepare("INSERT INTO activations (code_id, device_id, expires_at) VALUES (?, ?, ?)").run(row.id, device_id, expiresAt);
-    res.json({ valid: true, expires_at: expiresAt });
+    const token = jwt.sign({ role: 'user', code_id: row.id, device_id }, JWT_SECRET, { expiresIn: '12h' });
+    res.json({ valid: true, expires_at: expiresAt, token });
+});
+
+// ========== رابط الاتصال (Subscription Link) ==========
+// يُرجع رابط الاتصال بعد التحقق من توكن الجلسة وصلاحية الاشتراك.
+// الرابط يُقرأ من متغير البيئة SUB_LINK (يمكن تغييره من Render دون تعديل الكود).
+const SUB_LINK = process.env.SUB_LINK || "https://t.me/HAX_NON_ROOT";
+
+app.get('/api/sub', (req, res) => {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) return res.status(401).json({ error: "no_token" });
+
+    const token = authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "invalid_token_format" });
+
+    let decoded;
+    try {
+        decoded = jwt.verify(token, JWT_SECRET);
+    } catch (e) {
+        return res.status(401).json({ error: "invalid_or_expired_token" });
+    }
+
+    if (!decoded || decoded.role !== 'user') return res.status(403).json({ error: "forbidden" });
+
+    const act = db.prepare("SELECT * FROM activations WHERE code_id = ? AND device_id = ?")
+        .get(decoded.code_id, decoded.device_id);
+    if (!act) return res.status(403).json({ error: "no_activation" });
+    if (new Date(act.expires_at) < new Date()) return res.status(403).json({ error: "expired" });
+
+    res.json({ link: SUB_LINK });
 });
 
 // ========== API للوحة التحكم (محمية بـ adminAuth) ==========
