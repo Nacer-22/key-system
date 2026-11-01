@@ -1,16 +1,25 @@
 {
   "name": "key-system",
-  "version": "1.0.0",
-  "description": "",
+  "version": "2.0.0",
+  "description": "Nacer_22 key licensing server (hardened)",
   "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node test/security.test.js",
+    "test:old": "node test/prove_old_vuln.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2"
+  },
+  "allowScripts": {
+    "better-sqlite3@11.10.0": true
   }
 }

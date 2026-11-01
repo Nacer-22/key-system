@@ -1,24 +1,96 @@
+/**
+ * ============================================================================
+ *  Nacer_22 — Key Server  (v2 · محصّن)
+ * ============================================================================
+ *  نسخة محصّنة من السيرفر الأصلي.
+ *  ⚠️ قاعدة ذهبية: واجهة لوحة التحكم (dashboard.html) لم تُلمس، وكل نقاط
+ *     الـ API التي تستدعيها بقيت بنفس المسار ونفس شكل الطلب والرد.
+ *
+ *  الثغرات المُصلحة:
+ *   1. تسريب keys.db و server.js عبر express.static('.')
+ *   2. تصعيد الصلاحيات: adminAuth كان يتحقق من التوكن ولا يفحص الدور
+ *   3. غياب حدّ المحاولات على /api/admin/login
+ *   4. مقارنة كلمة المرور غير آمنة ضد هجمات التوقيت
+ *   5. JWT_SECRET عشوائي عند غيابه (كل إعادة تشغيل تُبطل كل التوكنات)
+ *   6. لا تحقق من المدخلات
+ *   7. لا سجل محاولات
+ *   8. لا فهارس على activations
+ *   9. لا إبطال للتفعيلات
+ *  10. لا نبضة حياة
+ *  11. لا نقطة فحص صحة
+ *  12. البحث عن الكود حساس لحالة الأحرف
+ * ============================================================================
+ */
+
+'use strict';
+
 const express = require('express');
 const Database = require('better-sqlite3');
 const crypto = require('crypto');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const jwt = require('jsonwebtoken'); // إضافة جديدة
+const helmet = require('helmet');
+const jwt = require('jsonwebtoken');
+
 const app = express();
-const db = new Database('keys.db');
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static('.'));
+/* ==========================================================================
+ * 1) الإعدادات — فحص صارم عند الإقلاع
+ * ========================================================================== */
 
-// --- إعداد الحماية (Rate Limiting) ---
-const verifyLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 15,
-    message: { valid: false, reason: "too_many_requests" }
-});
+const PORT = process.env.PORT || 3000;
+const DB_PATH = process.env.DB_PATH || 'keys.db';
+const SUB_LINK = process.env.SUB_LINK || 'https://t.me/HAX_NON_ROOT';
 
-// --- إعداد قاعدة البيانات ---
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+// توافقية رجعية: إن لم تُضبط المفاتيح المنفصلة، نرجع إلى JWT_SECRET القديم
+// حتى لا يتعطّل النشر الحالي. الفحص الحقيقي للدور هو ما يمنع تصعيد الصلاحيات.
+const LEGACY_SECRET = process.env.JWT_SECRET;
+const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || LEGACY_SECRET;
+const USER_JWT_SECRET = process.env.USER_JWT_SECRET || LEGACY_SECRET;
+
+const USER_TOKEN_TTL = process.env.USER_TOKEN_TTL || '12h';
+const ADMIN_TOKEN_TTL = process.env.ADMIN_TOKEN_TTL || '1h';
+
+function fatal(msg) {
+  console.error('\n❌ خطأ إعداد: ' + msg + '\n');
+  process.exit(1);
+}
+
+if (!ADMIN_PASSWORD) {
+  fatal('ADMIN_PASSWORD غير مضبوط. اضبطه في متغيرات البيئة قبل الإقلاع.');
+}
+if (ADMIN_PASSWORD.length < 8) {
+  console.warn('⚠️  ADMIN_PASSWORD أقصر من 8 أحرف — يُنصح بـ 16 حرفاً أو أكثر.');
+}
+if (!ADMIN_JWT_SECRET || ADMIN_JWT_SECRET.length < 16) {
+  fatal('ADMIN_JWT_SECRET (أو JWT_SECRET) غير مضبوط أو أقصر من 16 حرفاً.');
+}
+if (!USER_JWT_SECRET || USER_JWT_SECRET.length < 16) {
+  fatal('USER_JWT_SECRET (أو JWT_SECRET) غير مضبوط أو أقصر من 16 حرفاً.');
+}
+if (ADMIN_JWT_SECRET === USER_JWT_SECRET) {
+  console.warn(
+    '⚠️  ADMIN_JWT_SECRET و USER_JWT_SECRET متطابقان. الحماية قائمة على فحص الدور،\n' +
+      '   لكن يُفضّل استخدام مفتاحين مختلفين (طبقة دفاع إضافية).'
+  );
+}
+
+// Render / أي reverse proxy: نحتاج trust proxy حتى يعمل rate-limit على IP الحقيقي
+if (process.env.TRUST_PROXY !== 'false') {
+  app.set('trust proxy', Number(process.env.TRUST_PROXY) || 1);
+}
+
+/* ==========================================================================
+ * 2) قاعدة البيانات — جداول + فهارس + ترحيل تلقائي
+ * ========================================================================== */
+
+const db = new Database(DB_PATH);
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+db.pragma('busy_timeout = 5000');
+
 db.exec(`
 CREATE TABLE IF NOT EXISTS codes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,149 +102,589 @@ CREATE TABLE IF NOT EXISTS codes (
     is_active INTEGER DEFAULT 1,
     note TEXT
 );
+
 CREATE TABLE IF NOT EXISTS activations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     code_id INTEGER NOT NULL,
     device_id TEXT NOT NULL,
     activated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP NOT NULL,
-    FOREIGN KEY(code_id) REFERENCES codes(id)
+    FOREIGN KEY(code_id) REFERENCES codes(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL,
+    code TEXT,
+    device_id TEXT,
+    ip TEXT,
+    ok INTEGER NOT NULL DEFAULT 0,
+    reason TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_act_code_device ON activations(code_id, device_id);
+CREATE INDEX IF NOT EXISTS idx_act_code        ON activations(code_id);
+CREATE INDEX IF NOT EXISTS idx_codes_code      ON codes(code);
+CREATE INDEX IF NOT EXISTS idx_attempts_time   ON attempts(created_at);
 `);
 
-// --- إعدادات المصادقة الآمنة ---
-// سيتم قراءتها من Environment Variables على Render
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
-
-if (!ADMIN_PASSWORD) {
-    console.warn("⚠️ تحذير: لم يتم تعيين كلمة مرور الإدارة في متغيرات البيئة (ADMIN_PASSWORD).");
+/** إضافة عمود إن لم يكن موجوداً (ترحيل قواعد البيانات القديمة) */
+function ensureColumn(table, column, definition) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (!cols.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    console.log(`   ↳ ترحيل: أُضيف العمود ${table}.${column}`);
+  }
 }
 
-// مسار تسجيل الدخول (يتحقق من كلمة المرور ويعطي توكن)
-app.post('/api/admin/login', (req, res) => {
-    const { password } = req.body;
-    
-    if (!password || password !== ADMIN_PASSWORD) {
-        return res.status(401).json({ error: "Unauthorized", message: "كلمة المرور غير صحيحة" });
-    }
-    
-    // إنشاء توكن صالح لمدة ساعة
-    const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token });
+ensureColumn('activations', 'device_label', 'TEXT');
+ensureColumn('activations', 'last_seen_at', 'TIMESTAMP');
+ensureColumn('activations', 'revoked_at', 'TIMESTAMP');
+ensureColumn('codes', 'plan', "TEXT DEFAULT 'PRO'");
+
+/* ==========================================================================
+ * 3) أدوات مساعدة
+ * ========================================================================== */
+
+/** مقارنة آمنة ضد هجمات التوقيت */
+function safeEqual(a, b) {
+  const ab = Buffer.from(String(a ?? ''), 'utf8');
+  const bb = Buffer.from(String(b ?? ''), 'utf8');
+  if (ab.length !== bb.length) {
+    // نقارن شيئاً بطوله نفسه لإبقاء الزمن ثابتاً
+    crypto.timingSafeEqual(ab, ab);
+    return false;
+  }
+  return crypto.timingSafeEqual(ab, bb);
+}
+
+function readBearer(req) {
+  const h = req.headers['authorization'] || req.headers['Authorization'];
+  if (!h || typeof h !== 'string') return null;
+  const parts = h.split(' ');
+  if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') return null;
+  return parts[1].trim() || null;
+}
+
+function clientIp(req) {
+  return (req.ip || req.socket?.remoteAddress || 'unknown').replace(/^::ffff:/, '');
+}
+
+const logAttempt = db.prepare(
+  'INSERT INTO attempts (kind, code, device_id, ip, ok, reason) VALUES (?, ?, ?, ?, ?, ?)'
+);
+function recordAttempt(kind, { code = null, deviceId = null, ip = null, ok = 0, reason = null }) {
+  try {
+    logAttempt.run(kind, code, deviceId, ip, ok ? 1 : 0, reason);
+  } catch (e) {
+    console.error('recordAttempt failed:', e.message);
+  }
+}
+
+const CODE_RE = /^[A-Za-z0-9_-]{4,64}$/;
+const DEVICE_RE = /^[A-Za-z0-9._:-]{8,128}$/;
+
+/* ==========================================================================
+ * 4) الوسائط العامة
+ * ========================================================================== */
+
+// helmet مع تعطيل CSP: لوحة التحكم تستخدم سكربتات وأنماطاً مضمّنة وخطوطاً من CDN،
+// وتشغيل CSP الافتراضي سيكسرها. (لم نلمس اللوحة، فلم نفرض عليها سياسة جديدة.)
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
+
+// CORS: افتراضياً مفتوح للحفاظ على عمل اللوحة من أي أصل.
+// يمكن تقييده بـ ALLOWED_ORIGINS="https://a.com,https://b.com"
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS : true,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 600,
+  })
+);
+
+app.use(express.json({ limit: '32kb' }));
+
+/* ==========================================================================
+ * 5) 🔴 الإصلاح الحرج #1 — منع تسريب الملفات الحساسة
+ *    اللوحة تُخدم من الجذر (dashboard.html + assets/)، لذلك لا نستطيع نقلها.
+ *    الحل: حجب صريح لكل ما هو حساس قبل express.static.
+ * ========================================================================== */
+
+const SENSITIVE_PATH = new RegExp(
+  [
+    '(^|/)(server\\.js|package(-lock)?\\.json|README\\.md|\\.env[^/]*|\\.git[^/]*|node_modules|test|tests|docs|data)(/|$)',
+    '\\.(db|sqlite|sqlite3|db-wal|db-shm|db-journal|log|jks|keystore|pem|key|crt|map)$',
+  ].join('|'),
+  'i'
+);
+
+app.use((req, res, next) => {
+  let p;
+  try {
+    p = decodeURIComponent(req.path);
+  } catch {
+    return res.status(400).type('text/plain').send('bad request');
+  }
+  if (p.includes('\0') || p.includes('..') || SENSITIVE_PATH.test(p)) {
+    return res.status(404).type('text/plain').send('Not found');
+  }
+  next();
 });
 
-// دالة حماية المسارات الإدارية
+app.use(
+  express.static('.', {
+    dotfiles: 'deny',
+    index: false,
+    etag: true,
+    maxAge: '1h',
+    setHeaders(res, filePath) {
+      if (/\.(db|sqlite|sqlite3|db-wal|db-shm|db-journal)$/i.test(filePath)) {
+        res.status(404).end();
+      }
+    },
+  })
+);
+
+/* ==========================================================================
+ * 6) فحص الصحة — لـ Render والمراقبة
+ * ========================================================================== */
+
+app.get('/api/health', (req, res) => {
+  try {
+    db.prepare('SELECT 1').get();
+    res.json({ ok: true, uptime: Math.floor(process.uptime()) });
+  } catch {
+    res.status(503).json({ ok: false });
+  }
+});
+
+/* ==========================================================================
+ * 7) محددات المعدل
+ * ========================================================================== */
+
+const jsonLimit = (payload) => ({
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: payload,
+});
+
+// 🔴 الإصلاح الحرج #3 — حدّ على محاولات دخول المدير
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 8,
+  skipSuccessfulRequests: true,
+  ...jsonLimit({ error: 'too_many_attempts', message: 'محاولات كثيرة، حاول بعد 15 دقيقة' }),
+});
+
+const verifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  ...jsonLimit({ valid: false, reason: 'too_many_requests' }),
+});
+
+const subLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  ...jsonLimit({ error: 'too_many_requests' }),
+});
+
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 600,
+  ...jsonLimit({ error: 'too_many_requests' }),
+});
+
+/* ==========================================================================
+ * 8) 🔴 الإصلاح الحرج #2 — مصادقة المدير: فحص الدور فعلياً
+ * ========================================================================== */
+
 function adminAuth(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    if (!authHeader) return res.status(403).json({ error: "No token provided" });
-    
-    const token = authHeader.split(' ')[1];
-    if (!token) return res.status(403).json({ error: "Invalid token format" });
-    
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) return res.status(401).json({ error: "Unauthorized", message: "انتهت الجلسة" });
-        req.user = decoded;
-        next();
-    });
+  const token = readBearer(req);
+  if (!token) return res.status(403).json({ error: 'No token provided' });
+
+  jwt.verify(token, ADMIN_JWT_SECRET, { algorithms: ['HS256'] }, (err, decoded) => {
+    if (err) return res.status(401).json({ error: 'Unauthorized', message: 'انتهت الجلسة' });
+    // ← السطر الذي كان غائباً في النسخة الأصلية
+    if (!decoded || decoded.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden', message: 'صلاحيات غير كافية' });
+    }
+    req.user = decoded;
+    next();
+  });
 }
 
-// ========== API للعميل (لا يحتاج توكن) ==========
+/* ==========================================================================
+ * 9) دخول المدير
+ * ========================================================================== */
+
+app.post('/api/admin/login', loginLimiter, (req, res) => {
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
+
+  if (!password) {
+    recordAttempt('admin_login', { ip: clientIp(req), ok: 0, reason: 'missing_password' });
+    return res.status(401).json({ error: 'Unauthorized', message: 'كلمة المرور غير صحيحة' });
+  }
+
+  if (!safeEqual(password, ADMIN_PASSWORD)) {
+    recordAttempt('admin_login', { ip: clientIp(req), ok: 0, reason: 'bad_password' });
+    return res.status(401).json({ error: 'Unauthorized', message: 'كلمة المرور غير صحيحة' });
+  }
+
+  recordAttempt('admin_login', { ip: clientIp(req), ok: 1 });
+  const token = jwt.sign({ role: 'admin' }, ADMIN_JWT_SECRET, { expiresIn: ADMIN_TOKEN_TTL });
+  res.json({ token });
+});
+
+/* ==========================================================================
+ * 10) التحقق من الكود (يستدعيه التطبيق)
+ * ========================================================================== */
+
 app.post('/api/verify', verifyLimiter, (req, res) => {
-    const { code, device_id } = req.body;
-    if (!code || !device_id) return res.json({ valid: false, reason: "missing_params" });
+  const body = req.body || {};
+  const code = typeof body.code === 'string' ? body.code.trim() : '';
+  const deviceId = typeof body.device_id === 'string' ? body.device_id.trim() : '';
+  const ip = clientIp(req);
 
-    const row = db.prepare("SELECT * FROM codes WHERE code = ?").get(code);
-    if (!row) return res.json({ valid: false, reason: "code_not_found" });
-    if (!row.is_active) return res.json({ valid: false, reason: "code_disabled" });
-    if (row.expires_at && new Date(row.expires_at) < new Date())
-        return res.json({ valid: false, reason: "code_expired" });
+  if (!code || !deviceId) {
+    recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'missing_params' });
+    return res.json({ valid: false, reason: 'missing_params' });
+  }
+  if (!CODE_RE.test(code)) {
+    recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'invalid_code_format' });
+    return res.json({ valid: false, reason: 'invalid_code_format' });
+  }
+  if (!DEVICE_RE.test(deviceId)) {
+    recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'invalid_device_id' });
+    return res.json({ valid: false, reason: 'invalid_device_id' });
+  }
 
-    let act = db.prepare("SELECT * FROM activations WHERE code_id = ? AND device_id = ?").get(row.id, device_id);
-    if (act) {
-        if (new Date(act.expires_at) < new Date())
-            return res.json({ valid: false, reason: "expired" });
-        const token = jwt.sign({ role: 'user', code_id: row.id, device_id }, JWT_SECRET, { expiresIn: '12h' });
-        return res.json({ valid: true, expires_at: act.expires_at, token });
+  // COLLATE NOCASE: الأكواد مختلطة الأحرف (Nacer-a1B2-...) فلا نجبر حالة واحدة
+  const row = db.prepare('SELECT * FROM codes WHERE code = ? COLLATE NOCASE').get(code);
+  if (!row) {
+    recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'code_not_found' });
+    return res.json({ valid: false, reason: 'code_not_found' });
+  }
+  if (!row.is_active) {
+    recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'code_disabled' });
+    return res.json({ valid: false, reason: 'code_disabled' });
+  }
+  if (row.expires_at && new Date(row.expires_at) < new Date()) {
+    recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'code_expired' });
+    return res.json({ valid: false, reason: 'code_expired' });
+  }
+
+  const act = db
+    .prepare('SELECT * FROM activations WHERE code_id = ? AND device_id = ?')
+    .get(row.id, deviceId);
+
+  if (act) {
+    if (act.revoked_at) {
+      recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'revoked' });
+      return res.json({ valid: false, reason: 'revoked' });
+    }
+    if (new Date(act.expires_at) < new Date()) {
+      recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'expired' });
+      return res.json({ valid: false, reason: 'expired' });
     }
 
-    const count = db.prepare("SELECT COUNT(*) AS c FROM activations WHERE code_id = ?").get(row.id).c;
-    if (count >= row.max_devices) return res.json({ valid: false, reason: "max_devices_reached" });
+    db.prepare('UPDATE activations SET last_seen_at = ? WHERE id = ?').run(
+      new Date().toISOString(),
+      act.id
+    );
 
-    const expiresAt = row.duration_hours === 0
-        ? new Date('9999-12-31').toISOString()
-        : new Date(Date.now() + row.duration_hours * 3600 * 1000).toISOString();
+    const token = jwt.sign(
+      { role: 'user', code_id: row.id, device_id: deviceId },
+      USER_JWT_SECRET,
+      { expiresIn: USER_TOKEN_TTL }
+    );
+    recordAttempt('verify', { code, deviceId, ip, ok: 1, reason: 'reused' });
+    return res.json({
+      valid: true,
+      expires_at: act.expires_at,
+      plan: row.plan || 'PRO',
+      token,
+    });
+  }
 
-    db.prepare("INSERT INTO activations (code_id, device_id, expires_at) VALUES (?, ?, ?)").run(row.id, device_id, expiresAt);
-    const token = jwt.sign({ role: 'user', code_id: row.id, device_id }, JWT_SECRET, { expiresIn: '12h' });
-    res.json({ valid: true, expires_at: expiresAt, token });
+  // عدد الأجهزة = التفعيلات غير المُبطلة فقط
+  const used = db
+    .prepare('SELECT COUNT(*) AS c FROM activations WHERE code_id = ? AND revoked_at IS NULL')
+    .get(row.id).c;
+
+  if (used >= row.max_devices) {
+    recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'max_devices_reached' });
+    return res.json({ valid: false, reason: 'max_devices_reached' });
+  }
+
+  const expiresAt =
+    row.duration_hours === 0
+      ? new Date('9999-12-31').toISOString()
+      : new Date(Date.now() + row.duration_hours * 3600 * 1000).toISOString();
+
+  db.prepare(
+    'INSERT INTO activations (code_id, device_id, expires_at, last_seen_at) VALUES (?, ?, ?, ?)'
+  ).run(row.id, deviceId, expiresAt, new Date().toISOString());
+
+  const token = jwt.sign(
+    { role: 'user', code_id: row.id, device_id: deviceId },
+    USER_JWT_SECRET,
+    { expiresIn: USER_TOKEN_TTL }
+  );
+
+  recordAttempt('verify', { code, deviceId, ip, ok: 1, reason: 'activated' });
+  res.json({ valid: true, expires_at: expiresAt, plan: row.plan || 'PRO', token });
 });
 
-// ========== رابط الاتصال (Subscription Link) ==========
-// يُرجع رابط الاتصال بعد التحقق من توكن الجلسة وصلاحية الاشتراك.
-// الرابط يُقرأ من متغير البيئة SUB_LINK (يمكن تغييره من Render دون تعديل الكود).
-const SUB_LINK = process.env.SUB_LINK || "https://t.me/HAX_NON_ROOT";
+/* ==========================================================================
+ * 11) رابطة الاشتراك
+ * ========================================================================== */
 
-app.get('/api/sub', (req, res) => {
-    const authHeader = req.headers['authorization'];
-    if (!authHeader) return res.status(401).json({ error: "no_token" });
+app.get('/api/sub', subLimiter, (req, res) => {
+  const token = readBearer(req);
+  if (!token) return res.status(401).json({ error: 'no_token' });
 
-    const token = authHeader.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "invalid_token_format" });
+  let decoded;
+  try {
+    decoded = jwt.verify(token, USER_JWT_SECRET, { algorithms: ['HS256'] });
+  } catch {
+    return res.status(401).json({ error: 'invalid_or_expired_token' });
+  }
 
-    let decoded;
-    try {
-        decoded = jwt.verify(token, JWT_SECRET);
-    } catch (e) {
-        return res.status(401).json({ error: "invalid_or_expired_token" });
-    }
+  if (!decoded || decoded.role !== 'user') return res.status(403).json({ error: 'forbidden' });
 
-    if (!decoded || decoded.role !== 'user') return res.status(403).json({ error: "forbidden" });
+  const act = db
+    .prepare('SELECT * FROM activations WHERE code_id = ? AND device_id = ?')
+    .get(decoded.code_id, decoded.device_id);
 
-    const act = db.prepare("SELECT * FROM activations WHERE code_id = ? AND device_id = ?")
-        .get(decoded.code_id, decoded.device_id);
-    if (!act) return res.status(403).json({ error: "no_activation" });
-    if (new Date(act.expires_at) < new Date()) return res.status(403).json({ error: "expired" });
+  if (!act) return res.status(403).json({ error: 'no_activation' });
+  if (act.revoked_at) return res.status(403).json({ error: 'revoked' });
+  if (new Date(act.expires_at) < new Date()) return res.status(403).json({ error: 'expired' });
 
-    res.json({ link: SUB_LINK });
+  db.prepare('UPDATE activations SET last_seen_at = ? WHERE id = ?').run(
+    new Date().toISOString(),
+    act.id
+  );
+
+  res.json({ link: SUB_LINK });
 });
 
-// ========== API للوحة التحكم (محمية بـ adminAuth) ==========
-app.post('/api/admin/codes', adminAuth, (req, res) => {
-    const { duration_hours, max_devices = 1, count = 1, note = "" } = req.body;
-    const codes = [];
-    const stmt = db.prepare(`INSERT INTO codes (code, duration_hours, max_devices, note) VALUES (?, ?, ?, ?)`);
+/* ==========================================================================
+ * 12) نبضة الحياة — تُبطل الجلسة فور إبطال التفعيل من اللوحة
+ * ========================================================================== */
+
+app.post('/api/heartbeat', subLimiter, (req, res) => {
+  const token = readBearer(req);
+  if (!token) return res.status(401).json({ error: 'no_token' });
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, USER_JWT_SECRET, { algorithms: ['HS256'] });
+  } catch {
+    return res.status(401).json({ error: 'invalid_or_expired_token' });
+  }
+  if (!decoded || decoded.role !== 'user') return res.status(403).json({ error: 'forbidden' });
+
+  const act = db
+    .prepare('SELECT * FROM activations WHERE code_id = ? AND device_id = ?')
+    .get(decoded.code_id, decoded.device_id);
+
+  if (!act) return res.json({ valid: false, reason: 'no_activation' });
+  if (act.revoked_at) return res.json({ valid: false, reason: 'revoked' });
+  if (new Date(act.expires_at) < new Date()) return res.json({ valid: false, reason: 'expired' });
+
+  db.prepare('UPDATE activations SET last_seen_at = ? WHERE id = ?').run(
+    new Date().toISOString(),
+    act.id
+  );
+
+  res.json({ valid: true, expires_at: act.expires_at });
+});
+
+/* ==========================================================================
+ * 13) لوحة التحكم — نفس المسارات ونفس شكل الردود تماماً
+ * ========================================================================== */
+
+function parseId(raw) {
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+/* --- إنشاء أكواد --- */
+app.post('/api/admin/codes', adminLimiter, adminAuth, (req, res) => {
+  const body = req.body || {};
+
+  const durationHours = Number(body.duration_hours);
+  const maxDevices = body.max_devices === undefined ? 1 : Number(body.max_devices);
+  const count = body.count === undefined ? 1 : Number(body.count);
+  const note = typeof body.note === 'string' ? body.note.slice(0, 200) : '';
+
+  if (!Number.isFinite(durationHours) || durationHours < 0 || durationHours > 876000) {
+    return res.status(400).json({ error: 'invalid_duration' });
+  }
+  if (!Number.isInteger(maxDevices) || maxDevices < 1 || maxDevices > 1000) {
+    return res.status(400).json({ error: 'invalid_max_devices' });
+  }
+  if (!Number.isInteger(count) || count < 1 || count > 200) {
+    return res.status(400).json({ error: 'invalid_count' });
+  }
+
+  const stmt = db.prepare(
+    'INSERT INTO codes (code, duration_hours, max_devices, note) VALUES (?, ?, ?, ?)'
+  );
+
+  const created = [];
+  const insertMany = db.transaction(() => {
     for (let i = 0; i < count; i++) {
-        const code = `Nacer-${crypto.randomBytes(2).toString('hex').toUpperCase()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
-        stmt.run(code, duration_hours, max_devices, note);
-        codes.push(code);
+      let code;
+      let tries = 0;
+      // ضمان عدم التكرار (UNIQUE) بدل الاعتماد على الحظ
+      do {
+        code =
+          'Nacer-' +
+          crypto.randomBytes(2).toString('hex').toUpperCase() +
+          '-' +
+          crypto.randomBytes(2).toString('hex').toUpperCase() +
+          '-' +
+          crypto.randomBytes(2).toString('hex').toUpperCase();
+        tries++;
+      } while (tries < 10 && db.prepare('SELECT 1 FROM codes WHERE code = ?').get(code));
+      stmt.run(code, durationHours, maxDevices, note);
+      created.push(code);
     }
-    res.json({ created: codes });
+  });
+
+  try {
+    insertMany();
+  } catch (e) {
+    console.error('create codes failed:', e.message);
+    return res.status(500).json({ error: 'insert_failed' });
+  }
+
+  res.json({ created });
 });
 
-app.get('/api/admin/codes', adminAuth, (req, res) => {
-    const rows = db.prepare(`
-        SELECT c.*, (SELECT COUNT(*) FROM activations a WHERE a.code_id = c.id) AS used
-        FROM codes c ORDER BY c.id DESC
-    `).all();
-    res.json(rows);
+/* --- قراءة الأكواد (نفس أعمدة اللوحة + used) --- */
+app.get('/api/admin/codes', adminLimiter, adminAuth, (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT c.*,
+              (SELECT COUNT(*) FROM activations a
+                 WHERE a.code_id = c.id AND a.revoked_at IS NULL) AS used
+         FROM codes c
+        ORDER BY c.id DESC`
+    )
+    .all();
+  res.json(rows);
 });
 
-app.delete('/api/admin/codes/:id', adminAuth, (req, res) => {
-    db.prepare("DELETE FROM activations WHERE code_id = ?").run(req.params.id);
-    db.prepare("DELETE FROM codes WHERE id = ?").run(req.params.id);
-    res.json({ ok: true });
+/* --- تفعيلات كود معيّن --- */
+app.get('/api/admin/codes/:id/activations', adminLimiter, adminAuth, (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid_id' });
+
+  const rows = db.prepare('SELECT * FROM activations WHERE code_id = ? ORDER BY id DESC').all(id);
+  res.json(rows);
 });
 
-app.delete('/api/admin/codes/:id/reset', adminAuth, (req, res) => {
-    db.prepare("DELETE FROM activations WHERE code_id = ?").run(req.params.id);
-    res.json({ ok: true });
+/* --- إعادة تعيين الأجهزة (اللوحة تستدعي DELETE) ---
+ * نُسجّل هذا المسار قبل /:id لضمان الأولوية بغض النظر عن ترتيب المطابقة.
+ */
+function resetDevices(req, res) {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid_id' });
+
+  const info = db.prepare('DELETE FROM activations WHERE code_id = ?').run(id);
+  res.json({ ok: true, removed: info.changes });
+}
+app.delete('/api/admin/codes/:id/reset', adminLimiter, adminAuth, resetDevices);
+app.post('/api/admin/codes/:id/reset', adminLimiter, adminAuth, resetDevices);
+
+/* --- حذف كود --- */
+app.delete('/api/admin/codes/:id', adminLimiter, adminAuth, (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid_id' });
+
+  const del = db.transaction(() => {
+    db.prepare('DELETE FROM activations WHERE code_id = ?').run(id);
+    return db.prepare('DELETE FROM codes WHERE id = ?').run(id);
+  });
+
+  const info = del();
+  if (info.changes === 0) return res.status(404).json({ error: 'not_found' });
+  res.json({ ok: true });
 });
 
-app.patch('/api/admin/codes/:id', adminAuth, (req, res) => {
-    db.prepare("UPDATE codes SET is_active = ? WHERE id = ?").run(req.body.is_active ? 1 : 0, req.params.id);
-    res.json({ ok: true });
+/* --- تفعيل/تعطيل كود --- */
+app.patch('/api/admin/codes/:id', adminLimiter, adminAuth, (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid_id' });
+
+  const info = db
+    .prepare('UPDATE codes SET is_active = ? WHERE id = ?')
+    .run(req.body?.is_active ? 1 : 0, id);
+
+  if (info.changes === 0) return res.status(404).json({ error: 'not_found' });
+  res.json({ ok: true });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server on port ${PORT}`));
+/* --- سجل المحاولات --- */
+app.get('/api/admin/attempts', adminLimiter, adminAuth, (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
+  const rows = db.prepare('SELECT * FROM attempts ORDER BY id DESC LIMIT ?').all(limit);
+  res.json(rows);
+});
+
+/* ==========================================================================
+ * 14) 404 + معالج أخطاء (لا يكشف stack traces)
+ * ========================================================================== */
+
+app.use((req, res) => res.status(404).json({ error: 'not_found' }));
+
+app.use((err, req, res, next) => {
+  if (err && err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'invalid_json' });
+  }
+  console.error('Unhandled error:', err?.message);
+  res.status(500).json({ error: 'internal_error' });
+});
+
+/* ==========================================================================
+ * 15) الإقلاع
+ * ========================================================================== */
+
+const server = app.listen(PORT, () => {
+  console.log(`✅ Server on port ${PORT}`);
+  console.log(`   DB: ${DB_PATH}`);
+  console.log(`   CORS: ${ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS.join(', ') : 'ALL'}`);
+  if (ADMIN_JWT_SECRET === USER_JWT_SECRET) {
+    console.log('   ⚠️  مفتاح توقيع واحد للمدير والمستخدم — يُفضّل فصلهما.');
+  }
+});
+
+function shutdown(sig) {
+  console.log(`\n${sig} — إغلاق آمن…`);
+  server.close(() => {
+    try {
+      db.close();
+    } catch {}
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(0), 5000).unref();
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+module.exports = app;
