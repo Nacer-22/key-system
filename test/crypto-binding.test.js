@@ -73,9 +73,16 @@ async function get(path) {
   const v2 = await post('/api/verify', { code, device_id: deviceId, pubkey: spki, signature: sig2, nonce: nonce2 });
   ok('إعادة تفعيل بتوقيع صحيح → valid', v2.d && v2.d.valid === true, v2);
 
-  // 5) بدون توقيع بعد الربط → مرفوض
+  // 5) بدون توقيع بعد الربط:
+  //    - REQUIRE_SIGNATURE=false (الافتراضي) → يُقبل، لأن التطبيق الحالي لا يوقّع
+  //    - REQUIRE_SIGNATURE=true → مرفوض signature_required
+  const REQUIRE_SIGNATURE = String(process.env.REQUIRE_SIGNATURE || 'false').toLowerCase() === 'true';
   const v3 = await post('/api/verify', { code, device_id: deviceId });
-  ok('بدون توقيع → signature_required', v3.d && v3.d.reason === 'signature_required', v3);
+  if (REQUIRE_SIGNATURE) {
+    ok('بدون توقيع → signature_required', v3.d && v3.d.reason === 'signature_required', v3);
+  } else {
+    ok('بدون توقيع → يُقبل (الربط اختياري)', v3.d && v3.d.valid === true, v3);
+  }
 
   // 6) توقيع بمفتاح مختلف (جهاز منسوخ) → مرفوض
   const other = crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
