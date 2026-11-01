@@ -412,14 +412,18 @@ function verifyDeviceSignature({ pubkey, signature, code, deviceId, nonce }) {
   }
   if (key.asymmetricKeyType !== 'ec') return { ok: false, error: 'bad_pubkey' };
 
-  const msg = Buffer.from(`${code}|${deviceId}|${nonce}`, 'utf8');
   const sig = Buffer.from(signature, 'base64');
 
+  /* الأكواد مختلطة الأحرف: نجرّب الصيغة كما أرسلها التطبيق ثم حاليها */
+  const candidates = [...new Set([code, code.toUpperCase(), code.toLowerCase()])];
   let ok = false;
-  try {
-    ok = crypto.verify('sha256', msg, { key, dsaEncoding: 'der' }, sig);
-  } catch {
-    ok = false;
+  for (const c of candidates) {
+    try {
+      const msg = Buffer.from(`${c}|${deviceId}|${nonce}`, 'utf8');
+      if (crypto.verify('sha256', msg, { key, dsaEncoding: 'der' }, sig)) { ok = true; break; }
+    } catch {
+      ok = false;
+    }
   }
   if (!ok) return { ok: false, error: 'bad_signature' };
 
