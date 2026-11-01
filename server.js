@@ -123,7 +123,23 @@ CREATE TABLE IF NOT EXISTS attempts (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+/* --- طلبات نقل المفتاح إلى جهاز جديد (سياسة "ج": بموافقة الأدمن) --- */
+CREATE TABLE IF NOT EXISTS transfer_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code_id INTEGER NOT NULL,
+    from_device_id TEXT,
+    to_device_id TEXT NOT NULL,
+    reason TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',   -- pending | approved | rejected | cancelled
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP,
+    resolved_by TEXT,
+    FOREIGN KEY(code_id) REFERENCES codes(id) ON DELETE CASCADE
+);
+
 CREATE INDEX IF NOT EXISTS idx_act_code_device ON activations(code_id, device_id);
+CREATE INDEX IF NOT EXISTS idx_tr_status       ON transfer_requests(status);
+CREATE INDEX IF NOT EXISTS idx_tr_code         ON transfer_requests(code_id);
 CREATE INDEX IF NOT EXISTS idx_act_code        ON activations(code_id);
 CREATE INDEX IF NOT EXISTS idx_codes_code      ON codes(code);
 CREATE INDEX IF NOT EXISTS idx_attempts_time   ON attempts(created_at);
@@ -426,7 +442,19 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
 
   if (used >= row.max_devices) {
     recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'max_devices_reached' });
-    return res.json({ valid: false, reason: 'max_devices_reached' });
+    // سياسة (ج): نُخبر التطبيق أنه يستطيع تقديم طلب نقل بموافقة الأدمن
+    const pending = db
+      .prepare(
+        "SELECT id FROM transfer_requests WHERE code_id = ? AND to_device_id = ? AND status = 'pending'"
+      )
+      .get(row.id, deviceId);
+    return res.json({
+      valid: false,
+      reason: 'max_devices_reached',
+      can_request_transfer: true,
+      transfer_status: pending ? 'pending' : 'none',
+      transfer_request_id: pending ? pending.id : null,
+    });
   }
 
   const expiresAt =
@@ -511,6 +539,121 @@ app.post('/api/heartbeat', subLimiter, (req, res) => {
   );
 
   res.json({ valid: true, expires_at: act.expires_at });
+});
+
+/* ==========================================================================
+ * 12.5) نقل المفتاح إلى جهاز جديد — سياسة (ج): بموافقة الأدمن
+ * ==========================================================================
+ *  الفكرة:
+ *   1. المستخدم على جهازه الجديد يفتح التطبيق → /api/verify يفشل بـ max_devices_reached
+ *      ويُعاد معه can_request_transfer: true
+ *   2. التطبيق يستدعي POST /api/transfer/request بالكود + معرّف الجهاز الجديد + سبب
+ *   3. الطلب يظهر للأدمن في صفحة transfer-requests.html
+ *   4. الأدمن يوافق → كل الأجهزة القديمة تُبطَل (revoked_at) والجهاز الجديد يُفعّل
+ *   5. المستخدم يستدعي /api/verify مرة أخرى فينجح
+ * ========================================================================== */
+
+/** استخراج التوكن والتحقق منه — يُعيد {decoded} أو يرسل الخطأ */
+function requireUserToken(req, res) {
+  const token = readBearer(req);
+  if (!token) {
+    res.status(401).json({ error: 'no_token' });
+    return null;
+  }
+  let decoded;
+  try {
+    decoded = jwt.verify(token, USER_JWT_SECRET, { algorithms: ['HS256'] });
+  } catch {
+    res.status(401).json({ error: 'invalid_or_expired_token' });
+    return null;
+  }
+  if (!decoded || decoded.role !== 'user') {
+    res.status(403).json({ error: 'forbidden' });
+    return null;
+  }
+  return decoded;
+}
+
+/* --- المستخدم يطلب نقل مفتاحه إلى جهاز جديد --- */
+app.post('/api/transfer/request', subLimiter, (req, res) => {
+  const body = req.body || {};
+  const code = typeof body.code === 'string' ? body.code.trim() : '';
+  const toDeviceId = typeof body.device_id === 'string' ? body.device_id.trim() : '';
+  const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 300) : '';
+  const ip = clientIp(req);
+
+  if (!code || !toDeviceId) {
+    recordAttempt('transfer_request', { code, deviceId: toDeviceId, ip, ok: 0, reason: 'missing_params' });
+    return res.status(400).json({ error: 'missing_params' });
+  }
+  if (!CODE_RE.test(code) || !DEVICE_RE.test(toDeviceId)) {
+    recordAttempt('transfer_request', { code, deviceId: toDeviceId, ip, ok: 0, reason: 'invalid_format' });
+    return res.status(400).json({ error: 'invalid_format' });
+  }
+
+  const row = db.prepare('SELECT * FROM codes WHERE code = ? COLLATE NOCASE').get(code);
+  if (!row) {
+    recordAttempt('transfer_request', { code, deviceId: toDeviceId, ip, ok: 0, reason: 'code_not_found' });
+    return res.status(404).json({ error: 'code_not_found' });
+  }
+  if (!row.is_active) {
+    recordAttempt('transfer_request', { code, deviceId: toDeviceId, ip, ok: 0, reason: 'code_disabled' });
+    return res.status(403).json({ error: 'code_disabled' });
+  }
+  if (row.expires_at && new Date(row.expires_at) < new Date()) {
+    recordAttempt('transfer_request', { code, deviceId: toDeviceId, ip, ok: 0, reason: 'code_expired' });
+    return res.status(403).json({ error: 'code_expired' });
+  }
+
+  // الجهاز الجديد مُفعّل أصلاً؟ لا حاجة لطلب
+  const already = db
+    .prepare('SELECT * FROM activations WHERE code_id = ? AND device_id = ? AND revoked_at IS NULL')
+    .get(row.id, toDeviceId);
+  if (already) {
+    return res.json({ ok: true, status: 'already_active' });
+  }
+
+  // طلب معلّق لنفس الجهاز؟ لا نُكرّره
+  const dup = db
+    .prepare(
+      "SELECT * FROM transfer_requests WHERE code_id = ? AND to_device_id = ? AND status = 'pending'"
+    )
+    .get(row.id, toDeviceId);
+  if (dup) {
+    return res.json({ ok: true, status: 'pending', request_id: dup.id });
+  }
+
+  const fromDevice = db
+    .prepare('SELECT device_id FROM activations WHERE code_id = ? AND revoked_at IS NULL ORDER BY id DESC LIMIT 1')
+    .get(row.id);
+
+  const info = db
+    .prepare(
+      'INSERT INTO transfer_requests (code_id, from_device_id, to_device_id, reason) VALUES (?, ?, ?, ?)'
+    )
+    .run(row.id, fromDevice?.device_id || null, toDeviceId, reason || null);
+
+  recordAttempt('transfer_request', { code, deviceId: toDeviceId, ip, ok: 1, reason: 'created' });
+  res.json({ ok: true, status: 'pending', request_id: info.lastInsertRowid });
+});
+
+/* --- المستخدم يتابع حالة طلبه --- */
+app.get('/api/transfer/status', subLimiter, (req, res) => {
+  const code = typeof req.query.code === 'string' ? req.query.code.trim() : '';
+  const deviceId = typeof req.query.device_id === 'string' ? req.query.device_id.trim() : '';
+  if (!code || !deviceId) return res.status(400).json({ error: 'missing_params' });
+
+  const row = db.prepare('SELECT id FROM codes WHERE code = ? COLLATE NOCASE').get(code);
+  if (!row) return res.status(404).json({ error: 'code_not_found' });
+
+  const tr = db
+    .prepare(
+      'SELECT id, status, created_at, resolved_at FROM transfer_requests WHERE code_id = ? AND to_device_id = ? ORDER BY id DESC LIMIT 1'
+    )
+    .get(row.id, deviceId);
+
+  if (!tr) return res.json({ status: 'none' });
+  res.json(tr);
 });
 
 /* ==========================================================================
@@ -645,6 +788,107 @@ app.get('/api/admin/attempts', adminLimiter, adminAuth, (req, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
   const rows = db.prepare('SELECT * FROM attempts ORDER BY id DESC LIMIT ?').all(limit);
   res.json(rows);
+});
+
+/* ==========================================================================
+ * 13.5) إدارة طلبات نقل المفتاح — للأدمن (صفحة transfer-requests.html)
+ * ========================================================================== */
+
+/* --- قائمة الطلبات (افتراضياً المعلّقة فقط) --- */
+app.get('/api/admin/transfers', adminLimiter, adminAuth, (req, res) => {
+  const status = typeof req.query.status === 'string' ? req.query.status : 'pending';
+  const allowed = ['pending', 'approved', 'rejected', 'cancelled', 'all'];
+  if (!allowed.includes(status)) return res.status(400).json({ error: 'invalid_status' });
+
+  const base = `SELECT t.*, c.code AS code_text, c.max_devices, c.is_active,
+                       (SELECT COUNT(*) FROM activations a
+                          WHERE a.code_id = t.code_id AND a.revoked_at IS NULL) AS used
+                  FROM transfer_requests t
+                  JOIN codes c ON c.id = t.code_id`;
+  const rows =
+    status === 'all'
+      ? db.prepare(`${base} ORDER BY t.id DESC LIMIT 500`).all()
+      : db.prepare(`${base} WHERE t.status = ? ORDER BY t.id DESC LIMIT 500`).all(status);
+
+  res.json(rows);
+});
+
+/* --- عدد الطلبات المعلّقة (شارة إشعار) --- */
+app.get('/api/admin/transfers/count', adminLimiter, adminAuth, (req, res) => {
+  const c = db
+    .prepare("SELECT COUNT(*) AS c FROM transfer_requests WHERE status = 'pending'")
+    .get().c;
+  res.json({ pending: c });
+});
+
+/* --- موافقة: إبطال كل الأجهزة القديمة + تفعيل الجهاز الجديد --- */
+app.post('/api/admin/transfers/:id/approve', adminLimiter, adminAuth, (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid_id' });
+
+  const tr = db.prepare('SELECT * FROM transfer_requests WHERE id = ?').get(id);
+  if (!tr) return res.status(404).json({ error: 'not_found' });
+  if (tr.status !== 'pending') return res.status(409).json({ error: 'already_resolved', status: tr.status });
+
+  const code = db.prepare('SELECT * FROM codes WHERE id = ?').get(tr.code_id);
+  if (!code) return res.status(404).json({ error: 'code_not_found' });
+
+  const now = new Date().toISOString();
+  const expiresAt =
+    code.duration_hours === 0
+      ? new Date('9999-12-31').toISOString()
+      : new Date(Date.now() + code.duration_hours * 3600 * 1000).toISOString();
+
+  const approve = db.transaction(() => {
+    // إبطال كل التفعيلات الحالية
+    db.prepare(
+      'UPDATE activations SET revoked_at = ? WHERE code_id = ? AND revoked_at IS NULL'
+    ).run(now, code.id);
+
+    // تفعيل الجهاز الجديد (أو إعادة تفعيله إن كان موجوداً مُبطلاً)
+    const existing = db
+      .prepare('SELECT * FROM activations WHERE code_id = ? AND device_id = ?')
+      .get(code.id, tr.to_device_id);
+
+    if (existing) {
+      db.prepare(
+        'UPDATE activations SET revoked_at = NULL, expires_at = ?, last_seen_at = ? WHERE id = ?'
+      ).run(expiresAt, now, existing.id);
+    } else {
+      db.prepare(
+        'INSERT INTO activations (code_id, device_id, expires_at, last_seen_at) VALUES (?, ?, ?, ?)'
+      ).run(code.id, tr.to_device_id, expiresAt, now);
+    }
+
+    db.prepare(
+      "UPDATE transfer_requests SET status = 'approved', resolved_at = ?, resolved_by = 'admin' WHERE id = ?"
+    ).run(now, id);
+
+    // إلغاء أي طلبات معلّقة أخرى لنفس المفتاح
+    db.prepare(
+      "UPDATE transfer_requests SET status = 'cancelled', resolved_at = ?, resolved_by = 'auto' WHERE code_id = ? AND status = 'pending' AND id != ?"
+    ).run(now, code.id, id);
+  });
+
+  approve();
+  recordAttempt('transfer_approve', { code: code.code, deviceId: tr.to_device_id, ip: clientIp(req), ok: 1, reason: 'approved' });
+  res.json({ ok: true, expires_at: expiresAt });
+});
+
+/* --- رفض --- */
+app.post('/api/admin/transfers/:id/reject', adminLimiter, adminAuth, (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid_id' });
+
+  const tr = db.prepare('SELECT * FROM transfer_requests WHERE id = ?').get(id);
+  if (!tr) return res.status(404).json({ error: 'not_found' });
+  if (tr.status !== 'pending') return res.status(409).json({ error: 'already_resolved', status: tr.status });
+
+  db.prepare(
+    "UPDATE transfer_requests SET status = 'rejected', resolved_at = ?, resolved_by = 'admin' WHERE id = ?"
+  ).run(new Date().toISOString(), id);
+
+  res.json({ ok: true });
 });
 
 /* ==========================================================================

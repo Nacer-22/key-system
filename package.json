@@ -1,6 +1,6 @@
 {
   "name": "key-system",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Nacer_22 key licensing server (hardened)",
   "main": "server.js",
   "engines": {
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node test/security.test.js",
+    "test": "node test/security.test.js && node test/transfer.test.js",
     "test:old": "node test/prove_old_vuln.js"
   },
   "dependencies": {

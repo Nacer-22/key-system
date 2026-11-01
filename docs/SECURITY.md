@@ -210,3 +210,76 @@ Render → Service → Disks → Add Disk
 
 Environment → DB_PATH = /var/data/keys.db
 ```
+
+---
+
+# 📱 إضافة: نقل المفتاح إلى جهاز جديد — سياسة (ج)
+
+## القرار
+المفتاح **لا يُنقل تلقائياً** ولا يُقفل نهائياً. العميل يطلب النقل من التطبيق،
+وأنت توافق أو ترفض من صفحة `transfer-requests.html`. عند الموافقة تُلغى كل
+الأجهزة القديمة تلقائياً ويُفعّل الجهاز الجديد فوراً.
+
+## كيف يعمل من البداية للنهاية
+
+| الخطوة | الطرف | ما يحدث |
+|--------|-------|---------|
+| 1 | التطبيق | `POST /api/verify` بكود المفتاح ومعرّف الجهاز الجديد |
+| 2 | السيرفر | يرد `{ valid:false, reason:'max_devices_reached', can_request_transfer:true }` |
+| 3 | التطبيق | يعرض زر «نقل إلى هذا الجهاز» ويستدعي `POST /api/transfer/request` |
+| 4 | السيرفر | يُنشئ سجلاً في `transfer_requests` بحالة `pending` |
+| 5 | أنت | تفتح `transfer-requests.html` فترى الطلب مع سبب العميل |
+| 6 | أنت | تضغط «موافقة» → كل الأجهزة القديمة `revoked_at` + تفعيل الجديد |
+| 7 | التطبيق | يستدعي `/api/verify` مرة أخرى → `valid:true` |
+
+## نقاط النهاية الجديدة
+
+### للمستخدم (بلا توكن — الكود نفسه هو الإثبات)
+```
+POST /api/transfer/request
+  body: { code, device_id, reason? }
+  → { ok:true, status:'pending', request_id }
+  → { ok:true, status:'already_active' }   // الجهاز مُفعّل أصلاً
+  → { ok:true, status:'pending', request_id } // طلب مكرر، لا تكرار
+
+GET /api/transfer/status?code=...&device_id=...
+  → { id, status, created_at, resolved_at }
+  → { status:'none' }
+```
+
+### للأدمن (توكن الأدمن)
+```
+GET  /api/admin/transfers?status=pending|approved|rejected|cancelled|all
+GET  /api/admin/transfers/count          → { pending: N }
+POST /api/admin/transfers/:id/approve    → { ok:true, expires_at }
+POST /api/admin/transfers/:id/reject     → { ok:true }
+```
+
+## ضمانات الأمان
+- `approve` تعمل داخل **معاملة واحدة** (`db.transaction`) — لا حالة وسطى.
+- لا يمكن الموافقة مرتين → `409 already_resolved`.
+- الموافقة على طلب واحد **تُلغي تلقائياً** كل الطلبات المعلّقة الأخرى لنفس المفتاح.
+- توكن المستخدم **لا يستطيع** الوصول لنقاط نهاية الأدمن (مفتاح توقيع مختلف → 401).
+- كل طلب وموافقة تُسجَّل في جدول `attempts`.
+- الطلب المكرر لنفس الجهاز لا يُنشئ سجلاً جديداً (لا إغراق).
+
+## صفحة الموافقة
+`transfer-requests.html` — ملف **مستقل تماماً**، لم يُلمس `dashboard.html`.
+تستخدم نفس كلمة مرور الأدمن ونفس التوكن المحفوظ في `localStorage`.
+تحديث تلقائي كل 45 ثانية عند وجود طلبات معلّقة.
+
+## الاختبارات
+`test/transfer.test.js` — 22 تأكيداً، جميعها ناجحة:
+```
+✅ تفعيل الجهاز الأول
+✅ الجهاز الثاني مرفوض + can_request_transfer
+✅ إنشاء طلب نقل
+✅ الطلب المكرر لا يُضاعف
+✅ توكن المستخدم لا يرى طلبات النقل
+✅ موافقة الأدمن
+✅ الجهاز القديم مُبطل
+✅ الجهاز الجديد مُفعّل
+✅ لا موافقة مزدوجة
+✅ المرفوض لا يُفعّل الجهاز
+✅ dashboard.html → 200 ولم تُعدّل
+```

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07080a">
+<meta name="robots" content="noindex,nofollow">
+<title>طلبات نقل المفاتيح · Nacer_22</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+    :root{
+        --bg:#07080a;
+        --surface:#101319;
+        --surface-2:#151922;
+        --surface-3:#1b2029;
+        --line:rgba(255,255,255,.07);
+        --line-strong:rgba(255,255,255,.13);
+        --red:#ff2b3d;
+        --red-deep:#c00d1c;
+        --gold:#f3c969;
+        --green:#2fd07a;
+        --amber:#f5a524;
+        --muted:#8b93a2;
+        --muted-2:#616a7a;
+        --text:#eef1f6;
+        --radius:16px;
+        --radius-sm:10px;
+        --ease:cubic-bezier(.22,.61,.36,1);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    body{
+        font-family:'Cairo',system-ui,sans-serif;
+        background:var(--bg);
+        color:var(--text);
+        min-height:100vh;
+        font-size:14px;
+        line-height:1.6;
+        -webkit-font-smoothing:antialiased;
+    }
+    body::before{
+        content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+        background:
+            radial-gradient(900px 500px at 85% -10%, rgba(255,43,61,.10), transparent 65%),
+            radial-gradient(700px 420px at 5% 100%, rgba(255,43,61,.05), transparent 70%);
+    }
+    ::selection{background:rgba(255,43,61,.35);color:#fff}
+    ::-webkit-scrollbar{width:10px;height:10px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:#232833;border-radius:20px;border:3px solid var(--bg)}
+    button,input,select{font-family:inherit}
+    a{color:inherit;text-decoration:none}
+
+    .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+
+    /* ---------- الشريط العلوي ---------- */
+    .topbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand img{width:44px;height:44px;border-radius:12px;object-fit:cover;border:1px solid var(--line-strong)}
+    .brand h1{font-size:19px;font-weight:800;letter-spacing:-.2px}
+    .brand p{font-size:12px;color:var(--muted);margin-top:-2px}
+    .spacer{flex:1}
+    .btn{
+        display:inline-flex;align-items:center;justify-content:center;gap:8px;
+        padding:10px 16px;border-radius:var(--radius-sm);border:1px solid var(--line-strong);
+        background:var(--surface-2);color:var(--text);font-size:13px;font-weight:600;
+        cursor:pointer;transition:.18s var(--ease);white-space:nowrap;
+    }
+    .btn:hover{background:var(--surface-3);transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+    .btn-red{background:linear-gradient(180deg,#ff3b4c,#c00d1c);border-color:rgba(255,255,255,.14);box-shadow:0 6px 18px -8px rgba(255,43,61,.8)}
+    .btn-red:hover{background:linear-gradient(180deg,#ff4d5d,#d01222)}
+    .btn-green{background:linear-gradient(180deg,#35d982,#1a9c58);border-color:rgba(255,255,255,.14);color:#04140b}
+    .btn-green:hover{background:linear-gradient(180deg,#43e58e,#1fae63)}
+    .btn-ghost{background:transparent}
+    .btn-sm{padding:7px 12px;font-size:12px;border-radius:9px}
+
+    /* ---------- بطاقات الإحصاء ---------- */
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+    .stat{
+        background:linear-gradient(180deg,var(--surface-2),var(--surface));
+        border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;
+        position:relative;overflow:hidden;
+    }
+    .stat::after{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--red);opacity:.8}
+    .stat.g::after{background:var(--green)}
+    .stat.a::after{background:var(--amber)}
+    .stat .k{font-size:11.5px;color:var(--muted);font-weight:600;letter-spacing:.2px}
+    .stat .v{font-size:28px;font-weight:800;margin-top:2px;font-family:'JetBrains Mono',monospace;line-height:1.15}
+
+    /* ---------- تبويبات ---------- */
+    .tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);padding:5px;border-radius:12px;margin-bottom:18px;overflow-x:auto}
+    .tab{
+        flex:1;min-width:100px;padding:9px 12px;border-radius:9px;border:0;background:transparent;
+        color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:.16s var(--ease);
+        display:flex;align-items:center;justify-content:center;gap:7px;
+    }
+    .tab:hover{color:var(--text);background:var(--surface-2)}
+    .tab.active{background:var(--surface-3);color:var(--text);box-shadow:inset 0 0 0 1px var(--line-strong)}
+    .tab .cnt{
+        background:var(--red);color:#fff;font-size:10.5px;font-weight:800;
+        padding:1px 7px;border-radius:20px;font-family:'JetBrains Mono',monospace;
+    }
+    .tab.active .cnt{background:var(--red-deep)}
+
+    /* ---------- بطاقة الطلب ---------- */
+    .card{
+        background:linear-gradient(180deg,var(--surface-2),var(--surface));
+        border:1px solid var(--line);border-radius:var(--radius);
+        padding:18px;margin-bottom:12px;transition:.18s var(--ease);
+    }
+    .card:hover{border-color:var(--line-strong)}
+    .card-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .card-head .code{
+        font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;
+        color:var(--gold);letter-spacing:.5px;word-break:break-all;
+    }
+    .badge{
+        font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;
+        border:1px solid;white-space:nowrap;
+    }
+    .badge.pending{color:var(--amber);border-color:rgba(245,165,36,.4);background:rgba(245,165,36,.1)}
+    .badge.approved{color:var(--green);border-color:rgba(47,208,122,.4);background:rgba(47,208,122,.1)}
+    .badge.rejected{color:var(--red);border-color:rgba(255,43,61,.4);background:rgba(255,43,61,.1)}
+    .badge.cancelled{color:var(--muted);border-color:var(--line-strong);background:rgba(255,255,255,.04)}
+
+    .rows{display:grid;gap:9px;margin-bottom:14px}
+    .row{display:grid;grid-template-columns:120px 1fr;gap:10px;font-size:13px;align-items:start}
+    .row .lbl{color:var(--muted);font-size:12px;font-weight:600;padding-top:1px}
+    .row .val{word-break:break-all;font-family:'JetBrains Mono',monospace;font-size:12px;color:#cfd6e4}
+    .row .val.plain{font-family:'Cairo',sans-serif;font-size:13px;color:var(--text)}
+    .arrow{color:var(--red);font-weight:800;margin:0 6px}
+
+    .actions{display:flex;gap:8px;flex-wrap:wrap;padding-top:12px;border-top:1px dashed var(--line)}
+
+    /* ---------- حالات فارغة / تحميل ---------- */
+    .empty{
+        text-align:center;padding:60px 20px;color:var(--muted);
+        border:1px dashed var(--line-strong);border-radius:var(--radius);background:rgba(255,255,255,.015);
+    }
+    .empty i{font-size:40px;opacity:.25;display:block;margin-bottom:14px}
+    .empty h3{font-size:16px;color:var(--text);font-weight:700;margin-bottom:6px}
+    .empty p{font-size:13px}
+
+    .skeleton{height:130px;border-radius:var(--radius);background:linear-gradient(90deg,var(--surface) 25%,var(--surface-3) 50%,var(--surface) 75%);background-size:200% 100%;animation:sh 1.3s infinite;margin-bottom:12px}
+    @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    /* ---------- شاشة الدخول ---------- */
+    .login-wrap{max-width:400px;margin:8vh auto 0}
+    .login-card{
+        background:linear-gradient(180deg,var(--surface-2),var(--surface));
+        border:1px solid var(--line-strong);border-radius:20px;padding:32px 26px;
+        box-shadow:0 30px 70px -30px rgba(0,0,0,.9);
+    }
+    .login-card .ic{
+        width:56px;height:56px;border-radius:16px;display:grid;place-items:center;
+        background:linear-gradient(180deg,rgba(255,43,61,.18),rgba(255,43,61,.06));
+        border:1px solid rgba(255,43,61,.28);color:var(--red);font-size:23px;margin:0 auto 18px;
+    }
+    .login-card h2{text-align:center;font-size:19px;font-weight:800;margin-bottom:6px}
+    .login-card .sub{text-align:center;font-size:12.5px;color:var(--muted);margin-bottom:24px}
+    .field{margin-bottom:14px}
+    .field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}
+    .field input{
+        width:100%;padding:12px 14px;border-radius:var(--radius-sm);
+        background:var(--bg);border:1px solid var(--line-strong);color:var(--text);
+        font-size:14px;transition:.16s var(--ease);
+    }
+    .field input:focus{outline:0;border-color:rgba(255,43,61,.6);box-shadow:0 0 0 3px rgba(255,43,61,.12)}
+    .login-card .btn{width:100%;padding:13px;margin-top:8px}
+
+    .err{
+        background:rgba(255,43,61,.1);border:1px solid rgba(255,43,61,.35);color:#ff8a95;
+        padding:10px 13px;border-radius:var(--radius-sm);font-size:12.5px;margin-bottom:14px;
+        display:none;
+    }
+    .err.show{display:block}
+
+    /* ---------- تنبيه (Toast) ---------- */
+    .toast{
+        position:fixed;bottom:24px;left:50%;transform:translate(-50%,120%);
+        background:var(--surface-3);border:1px solid var(--line-strong);
+        padding:13px 20px;border-radius:12px;font-size:13px;font-weight:600;
+        box-shadow:0 20px 50px -20px rgba(0,0,0,.9);z-index:99;
+        transition:transform .3s var(--ease);display:flex;align-items:center;gap:9px;
+    }
+    .toast.show{transform:translate(-50%,0)}
+    .toast.ok{border-color:rgba(47,208,122,.45);color:#8ef0bb}
+    .toast.bad{border-color:rgba(255,43,61,.45);color:#ff9aa4}
+
+    .note{
+        font-size:12px;color:var(--muted);background:rgba(255,255,255,.02);
+        border:1px solid var(--line);border-radius:var(--radius-sm);
+        padding:12px 14px;margin-bottom:18px;line-height:1.75;
+    }
+    .note b{color:var(--gold)}
+
+    @media(max-width:560px){
+        .wrap{padding:18px 14px 70px}
+        .row{grid-template-columns:1fr;gap:2px}
+        .row .lbl{font-size:11px}
+        .brand h1{font-size:16px}
+    }
+</style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+
+<!-- ============ شاشة الدخول ============ -->
+<div class="wrap" id="loginView">
+    <div class="login-wrap">
+        <div class="login-card">
+            <div class="ic"><i class="fa-solid fa-right-left"></i></div>
+            <h2>طلبات نقل المفاتيح</h2>
+            <p class="sub">صفحة إدارية — تتطلب كلمة مرور الأدمن</p>
+            <div class="err" id="loginErr"></div>
+            <div class="field">
+                <label for="pw">كلمة مرور الأدمن</label>
+                <input type="password" id="pw" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <button class="btn btn-red" id="loginBtn">
+                <i class="fa-solid fa-unlock"></i> دخول
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ الواجهة الرئيسية ============ -->
+<div class="wrap" id="appView" style="display:none">
+    <div class="topbar">
+        <div class="brand">
+            <img src="assets/logo.png" alt="Nacer_22">
+            <div>
+                <h1>طلبات نقل المفاتيح</h1>
+                <p>Nacer_22 · سياسة الموافقة اليدوية</p>
+            </div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-sm" id="refreshBtn"><i class="fa-solid fa-rotate"></i> تحديث</button>
+        <a class="btn btn-sm btn-ghost" href="dashboard.html"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a>
+        <button class="btn btn-sm btn-ghost" id="logoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+    </div>
+
+    <div class="stats">
+        <div class="stat a"><div class="k">قيد الانتظار</div><div class="v" id="cPending">—</div></div>
+        <div class="stat g"><div class="k">مقبولة</div><div class="v" id="cApproved">—</div></div>
+        <div class="stat"><div class="k">مرفوضة</div><div class="v" id="cRejected">—</div></div>
+    </div>
+
+    <div class="note">
+        <b>كيف تعمل؟</b> عندما يحاول عميل تشغيل مفتاحه على جهاز جديد بينما المفتاح مقفل على جهازه القديم،
+        يظهر طلبه هنا. عند الموافقة، <b>تُلغى كل الأجهزة القديمة تلقائياً</b> ويُفعّل الجهاز الجديد فوراً.
+        عند الرفض، يبقى كل شيء كما هو.
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-status="pending">قيد الانتظار <span class="cnt" id="tabPending">0</span></button>
+        <button class="tab" data-status="approved">مقبولة</button>
+        <button class="tab" data-status="rejected">مرفوضة</button>
+        <button class="tab" data-status="all">الكل</button>
+    </div>
+
+    <div id="list"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+ *  طلبات نقل المفاتيح — صفحة مستقلة تماماً عن dashboard.html
+ *  تستخدم نفس نقاط نهاية الأدمن (نفس كلمة المرور ونفس التوكن)
+ * ============================================================ */
+
+// نفس منطق اللوحة: نفس الأصل، أو عنوان السيرفر عند الفتح محلياً
+const API = (location.protocol === 'file:' || !location.host)
+    ? 'https://key-system-yn0o.onrender.com'
+    : location.origin;
+
+const TOKEN_KEY = 'nacer_admin_token';
+let currentStatus = 'pending';
+let counts = { pending: 0, approved: 0, rejected: 0 };
+
+const $ = (id) => document.getElementById(id);
+
+function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
+function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+
+function toast(msg, kind) {
+    const el = $('toast');
+    el.className = 'toast show ' + (kind || '');
+    el.innerHTML = (kind === 'ok' ? '<i class="fa-solid fa-circle-check"></i>'
+                  : kind === 'bad' ? '<i class="fa-solid fa-circle-exclamation"></i>'
+                  : '<i class="fa-solid fa-circle-info"></i>') + '<span>' + msg + '</span>';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+}
+
+function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso.includes('T') ? iso : iso.replace(' ', 'T') + 'Z');
+    if (isNaN(d)) return iso;
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function ago(iso) {
+    if (!iso) return '';
+    const d = new Date(iso.includes('T') ? iso : iso.replace(' ', 'T') + 'Z');
+    if (isNaN(d)) return '';
+    const s = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (s < 60) return 'الآن';
+    if (s < 3600) return `قبل ${Math.floor(s / 60)} دقيقة`;
+    if (s < 86400) return `قبل ${Math.floor(s / 3600)} ساعة`;
+    return `قبل ${Math.floor(s / 86400)} يوم`;
+}
+
+/* ---------- طلبات الشبكة ---------- */
+async function api(path, opts) {
+    const o = Object.assign({ headers: {} }, opts || {});
+    o.headers = Object.assign({ 'Content-Type': 'application/json' }, o.headers);
+    const t = getToken();
+    if (t) o.headers['Authorization'] = 'Bearer ' + t;
+
+    const res = await fetch(API + path, o);
+    let data = null;
+    try { data = await res.json(); } catch { data = null; }
+
+    if (res.status === 401 || res.status === 403) {
+        if (res.status === 401) { clearToken(); showLogin(); }
+        throw new Error((data && (data.message || data.error)) || 'غير مصرّح');
+    }
+    if (!res.ok) throw new Error((data && (data.error || data.message)) || ('HTTP ' + res.status));
+    return data;
+}
+
+/* ---------- الدخول ---------- */
+async function login() {
+    const pw = $('pw').value;
+    const errEl = $('loginErr');
+    errEl.classList.remove('show');
+
+    if (!pw) { errEl.textContent = 'أدخل كلمة المرور'; errEl.classList.add('show'); return; }
+
+    const btn = $('loginBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحقق...';
+
+    try {
+        const res = await fetch(API + '/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pw }),
+        });
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok || !data || !data.token) {
+            errEl.textContent = (data && (data.message || data.error)) || 'كلمة المرور غير صحيحة';
+            errEl.classList.add('show');
+            return;
+        }
+
+        setToken(data.token);
+        $('pw').value = '';
+        showApp();
+        await loadAll();
+    } catch (e) {
+        errEl.textContent = 'تعذّر الاتصال بالسيرفر';
+        errEl.classList.add('show');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-unlock"></i> دخول';
+    }
+}
+
+function showLogin() {
+    $('appView').style.display = 'none';
+    $('loginView').style.display = '';
+    setTimeout(() => $('pw').focus(), 60);
+}
+
+function showApp() {
+    $('loginView').style.display = 'none';
+    $('appView').style.display = '';
+}
+
+/* ---------- تحميل البيانات ---------- */
+async function loadCounts() {
+    try {
+        const pend = await api('/api/admin/transfers?status=pending');
+        const appr = await api('/api/admin/transfers?status=approved');
+        const rej  = await api('/api/admin/transfers?status=rejected');
+
+        counts = { pending: pend.length, approved: appr.length, rejected: rej.length };
+
+        $('cPending').textContent  = counts.pending;
+        $('cApproved').textContent = counts.approved;
+        $('cRejected').textContent = counts.rejected;
+        $('tabPending').textContent = counts.pending;
+    } catch (e) {
+        // لا نُفشل الواجهة كلها بسبب العدّادات
+    }
+}
+
+async function loadList() {
+    const box = $('list');
+    box.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
+
+    try {
+        const rows = await api('/api/admin/transfers?status=' + encodeURIComponent(currentStatus));
+
+        if (!rows.length) {
+            box.innerHTML = `
+                <div class="empty">
+                    <i class="fa-solid fa-inbox"></i>
+                    <h3>لا توجد طلبات</h3>
+                    <p>${currentStatus === 'pending' ? 'كل الطلبات مُعالجة — لا شيء ينتظرك.' : 'لا توجد طلبات في هذا التصنيف.'}</p>
+                </div>`;
+            return;
+        }
+
+        box.innerHTML = rows.map(renderCard).join('');
+    } catch (e) {
+        box.innerHTML = `
+            <div class="empty">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h3>تعذّر التحميل</h3>
+                <p>${esc(e.message)}</p>
+            </div>`;
+    }
+}
+
+function renderCard(r) {
+    const isPending = r.status === 'pending';
+    const statusAr = {
+        pending: 'قيد الانتظار',
+        approved: 'مقبولة',
+        rejected: 'مرفوضة',
+        cancelled: 'ملغاة تلقائياً',
+    }[r.status] || r.status;
+
+    return `
+    <div class="card" data-id="${r.id}">
+        <div class="card-head">
+            <span class="code">${esc(r.code_text)}</span>
+            <span class="badge ${esc(r.status)}">${esc(statusAr)}</span>
+            <div class="spacer" style="flex:1"></div>
+            <span style="font-size:11.5px;color:var(--muted)">${esc(ago(r.created_at))}</span>
+        </div>
+
+        <div class="rows">
+            <div class="row">
+                <span class="lbl">من جهاز</span>
+                <span class="val">${r.from_device_id ? esc(r.from_device_id) : '<span style="color:var(--muted)">لا يوجد جهاز مُفعّل</span>'}</span>
+            </div>
+            <div class="row">
+                <span class="lbl">إلى جهاز</span>
+                <span class="val" style="color:var(--green)">${esc(r.to_device_id)}</span>
+            </div>
+            ${r.reason ? `
+            <div class="row">
+                <span class="lbl">سبب الطلب</span>
+                <span class="val plain">${esc(r.reason)}</span>
+            </div>` : ''}
+            <div class="row">
+                <span class="lbl">تاريخ الطلب</span>
+                <span class="val">${esc(fmtDate(r.created_at))}</span>
+            </div>
+            <div class="row">
+                <span class="lbl">الأجهزة المستخدمة</span>
+                <span class="val">${r.used} / ${r.max_devices}</span>
+            </div>
+            ${r.resolved_at ? `
+            <div class="row">
+                <span class="lbl">تاريخ الحسم</span>
+                <span class="val">${esc(fmtDate(r.resolved_at))}</span>
+            </div>` : ''}
+        </div>
+
+        ${isPending ? `
+        <div class="actions">
+            <button class="btn btn-green btn-sm" onclick="approve(${r.id}, this)">
+                <i class="fa-solid fa-check"></i> موافقة وتفعيل الجهاز الجديد
+            </button>
+            <button class="btn btn-sm" onclick="reject(${r.id}, this)">
+                <i class="fa-solid fa-xmark"></i> رفض
+            </button>
+        </div>` : ''}
+    </div>`;
+}
+
+/* ---------- الإجراءات ---------- */
+async function approve(id, btn) {
+    if (!confirm('الموافقة ستُبطل كل الأجهزة القديمة لهذا المفتاح وتُفعّل الجهاز الجديد. متابعة؟')) return;
+
+    const card = btn.closest('.card');
+    card.querySelectorAll('button').forEach(b => b.disabled = true);
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التفعيل...';
+
+    try {
+        const r = await api('/api/admin/transfers/' + id + '/approve', { method: 'POST' });
+        toast('تمت الموافقة — الجهاز الجديد مُفعّل', 'ok');
+        await loadAll();
+    } catch (e) {
+        toast(e.message, 'bad');
+        card.querySelectorAll('button').forEach(b => b.disabled = false);
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> موافقة وتفعيل الجهاز الجديد';
+    }
+}
+
+async function reject(id, btn) {
+    if (!confirm('رفض الطلب؟ سيبقى المفتاح مقفلاً على جهازه الحالي.')) return;
+
+    const card = btn.closest('.card');
+    card.querySelectorAll('button').forEach(b => b.disabled = true);
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري الرفض...';
+
+    try {
+        await api('/api/admin/transfers/' + id + '/reject', { method: 'POST' });
+        toast('تم رفض الطلب', 'ok');
+        await loadAll();
+    } catch (e) {
+        toast(e.message, 'bad');
+        card.querySelectorAll('button').forEach(b => b.disabled = false);
+        btn.innerHTML = '<i class="fa-solid fa-xmark"></i> رفض';
+    }
+}
+
+async function loadAll() {
+    await loadCounts();
+    await loadList();
+}
+
+/* ---------- الأحداث ---------- */
+$('loginBtn').addEventListener('click', login);
+$('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+
+$('refreshBtn').addEventListener('click', async () => {
+    await loadAll();
+    toast('تم التحديث');
+});
+
+$('logoutBtn').addEventListener('click', () => {
+    clearToken();
+    showLogin();
+});
+
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentStatus = tab.dataset.status;
+        loadList();
+    });
+});
+
+/* ---------- الإقلاع ---------- */
+(async function boot() {
+    if (!getToken()) { showLogin(); return; }
+
+    // تحقق من صلاحية التوكن المحفوظ
+    try {
+        await api('/api/admin/transfers/count');
+        showApp();
+        await loadAll();
+    } catch {
+        clearToken();
+        showLogin();
+    }
+})();
+
+// تحديث تلقائي كل 45 ثانية عند وجود طلبات معلّقة
+setInterval(async () => {
+    if ($('appView').style.display === 'none') return;
+    if (currentStatus !== 'pending') return;
+    try { await loadAll(); } catch {}
+}, 45000);
+</script>
+</body>
+</html>
