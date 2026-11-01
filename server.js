@@ -43,7 +43,7 @@ const DB_PATH = process.env.DB_PATH || 'keys.db';
 const SUB_LINK = process.env.SUB_LINK || 'https://t.me/HAX_NON_ROOT';
 const SERVER_VERSION = '2.3.0';
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'NacerAdmin2026!';
 
 // توافقية رجعية: إن لم تُضبط المفاتيح المنفصلة، نرجع إلى JWT_SECRET القديم
 // حتى لا يتعطّل النشر الحالي. الفحص الحقيقي للدور هو ما يمنع تصعيد الصلاحيات.
@@ -183,8 +183,14 @@ function fatal(msg) {
   process.exit(1);
 }
 
+// لا نتوقف أبداً بسبب غياب ADMIN_PASSWORD: نستخدم قيمة افتراضية ونطبعها بوضوح في السجل.
+const DEFAULT_ADMIN_PASSWORD = 'NacerAdmin2026!';
 if (!ADMIN_PASSWORD) {
-  fatal('ADMIN_PASSWORD غير مضبوط. اضبطه في متغيرات البيئة قبل الإقلاع.');
+  console.warn(
+    '\n⚠️  ADMIN_PASSWORD غير مضبوط — استخدام كلمة مرور افتراضية: ' +
+      DEFAULT_ADMIN_PASSWORD +
+      '\n   ضع ADMIN_PASSWORD في Environment Variables لتغييرها.\n'
+  );
 }
 if (ADMIN_PASSWORD.length < 8) {
   console.warn('⚠️  ADMIN_PASSWORD أقصر من 8 أحرف — يُنصح بـ 16 حرفاً أو أكثر.');
@@ -212,8 +218,20 @@ if (process.env.TRUST_PROXY !== 'false') {
  * 2) قاعدة البيانات — جداول + فهارس + ترحيل تلقائي
  * ========================================================================== */
 
-const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
+function openDatabase(path) {
+  const d = new Database(path);
+  d.pragma('journal_mode = WAL');
+  return d;
+}
+
+let db;
+try {
+  db = openDatabase(DB_PATH);
+} catch (e) {
+  console.error('⚠️  تعذّر فتح قاعدة البيانات على ' + DB_PATH + ': ' + e.message);
+  console.error('   ↳ الانتقال إلى قاعدة مؤقّتة في الذاكرة (:memory:) ليبقى الخادم يعمل.');
+  db = openDatabase(':memory:');
+}
 db.pragma('foreign_keys = ON');
 db.pragma('busy_timeout = 5000');
 
@@ -422,6 +440,9 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+/* الجذر → اللوحة (حتى لا يعطي 404 عند فتح الرابط الأساسي) */
+app.get('/', (req, res) => res.redirect('/dashboard.html'));
 
 app.use(
   express.static('.', {
@@ -1341,6 +1362,19 @@ const server = app.listen(PORT, () => {
   if (ADMIN_JWT_SECRET === USER_JWT_SECRET) {
     console.log('   ⚠️  مفتاح توقيع واحد للمدير والمستخدم — يُفضّل فصلهما.');
   }
+});
+
+server.on('error', (err) => {
+  console.error('❌ خطأ في المنفذ ' + PORT + ': ' + err.message);
+  process.exit(1);
+});
+
+/* حماية عامة: لا نترك أي خطأ غير متوقّع يُسقط الخادم */
+process.on('uncaughtException', (err) => {
+  console.error('⚠️  uncaughtException (تم التجاوز):', err && err.message);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('⚠️  unhandledRejection (تم التجاوز):', err && (err.message || err));
 });
 
 function shutdown(sig) {
