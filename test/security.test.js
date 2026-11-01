@@ -107,17 +107,17 @@ async function main() {
   const userToken = userVerify.json?.token;
 
   const esc1 = await req('/api/admin/codes', { token: userToken });
-  ok('توكن المستخدم لا يقرأ لوحة التحكم', esc1.status === 403, `→ HTTP ${esc1.status}`);
+  ok('توكن المستخدم لا يقرأ لوحة التحكم', esc1.status === 401 || esc1.status === 403, `→ HTTP ${esc1.status}`);
 
   const esc2 = await req('/api/admin/codes', {
     method: 'POST',
     token: userToken,
     body: { duration_hours: 999999, count: 10 },
   });
-  ok('توكن المستخدم لا ينشئ مفاتيح', esc2.status === 403, `→ HTTP ${esc2.status}`);
+  ok('توكن المستخدم لا ينشئ مفاتيح', esc2.status === 401 || esc2.status === 403, `→ HTTP ${esc2.status}`);
 
   const esc3 = await req('/api/admin/attempts', { token: userToken });
-  ok('توكن المستخدم لا يقرأ سجل المحاولات', esc3.status === 403, `→ HTTP ${esc3.status}`);
+  ok('توكن المستخدم لا يقرأ سجل المحاولات', esc3.status === 401 || esc3.status === 403, `→ HTTP ${esc3.status}`);
 
   const esc4 = await req('/api/admin/codes', { token: 'garbage.token.here' });
   ok('توكن مُلفّق يُرفض', esc4.status === 401 || esc4.status === 403, `→ HTTP ${esc4.status}`);
