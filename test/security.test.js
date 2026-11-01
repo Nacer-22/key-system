@@ -90,7 +90,7 @@ async function main() {
   });
   ok('إنشاء مفتاحين', created.status === 200 && created.json?.created?.length === 2);
   const code = created.json?.created?.[0];
-  ok('صيغة المفتاح Nacer-XXXX-XXXX-XXXX', /^Nacer-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/.test(code || ''));
+  ok('صيغة المفتاح الموقّع NACER-EXP-DEV-RAND-SIG', /^NACER-[0-9A-Z]{8}-[0-9A-Z]{2}-[0-9A-Z]{3}-[0-9A-Z]{8}$/.test(code || ''));
 
   const list = await req('/api/admin/codes', { token: adminToken });
   ok('قراءة قائمة المفاتيح', list.status === 200 && Array.isArray(list.json));

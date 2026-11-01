@@ -41,7 +41,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DB_PATH || 'keys.db';
 const SUB_LINK = process.env.SUB_LINK || 'https://t.me/HAX_NON_ROOT';
-const SERVER_VERSION = '2.2.0';
+const SERVER_VERSION = '2.3.0';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
@@ -62,6 +62,98 @@ const ADMIN_TOKEN_TTL = process.env.ADMIN_TOKEN_TTL || '1h';
  * يمكن تشغيل الإجبار لاحقاً بمتغيّر البيئة REQUIRE_SIGNATURE=true.
  */
 const REQUIRE_SIGNATURE = String(process.env.REQUIRE_SIGNATURE || 'false').toLowerCase() === 'true';
+
+/**
+ * ============================================================================
+ *  سرّ توقيع الأكواد (Stateless codes)
+ * ============================================================================
+ *  المشكلة التي حلّها هذا: على Render (الخطة المجانية) القرص **مؤقّت** — يُمسح
+ *  keys.db عند كل إعادة تشغيل / سكون / نشر. فكان المستخدم ينشئ كوداً من اللوحة،
+ *  ثم يختفي الكود من قاعدة البيانات بعد دقائق، فيرد الخادم code_not_found
+ *  ويقول التطبيق «الكود غير صحيح» رغم أن الكود صحيح تماماً.
+ *
+ *  الحل: الكود نفسه يحمل مدّة صلاحيته وعدد أجهزته + توقيع HMAC-SHA256.
+ *  فيتحقق الخادم من الكود رياضياً **دون الحاجة لقاعدة البيانات إطلاقاً**.
+ *  قاعدة البيانات تبقى فقط لسجل الأكواد وإلغائها وحصر الأجهزة (وإن ضاعت
+ *  يبقى الكود صالحاً — وهذا هو المطلوب).
+ *
+ *  صيغة الكود:  NACER-<EXP36>-<DEV36>-<RAND3>-<SIG8>
+ *    EXP36 : وقت الانتهاء (ثواني UNIX) بصيغة base36، 8 محارف
+ *    DEV36 : (عدد الأجهزة - 1) بصيغة base36، محرفان
+ *    RAND3 : 3 محارف عشوائية
+ *    SIG8  : أول 40 بت من HMAC-SHA256(secret, EXP36+DEV36+RAND3) بصيغة base36
+ *  الطول الكلي 31 محرفاً — داخل حدود CODE_RE.
+ * ============================================================================
+ */
+const CODE_SECRET =
+  process.env.CODE_SECRET ||
+  process.env.USER_JWT_SECRET ||
+  process.env.JWT_SECRET ||
+  'nacer22-fallback-code-secret-change-me';
+
+const B36 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function toB36(n, len) {
+  let v = Math.floor(Number(n));
+  if (!Number.isFinite(v) || v < 0) v = 0;
+  let s = '';
+  while (v > 0) {
+    s = B36[v % 36] + s;
+    v = Math.floor(v / 36);
+  }
+  s = s || '0';
+  return len ? s.padStart(len, '0') : s;
+}
+
+function fromB36(s) {
+  let n = 0;
+  for (const ch of String(s).toUpperCase()) {
+    const i = B36.indexOf(ch);
+    if (i < 0) return NaN;
+    n = n * 36 + i;
+  }
+  return n;
+}
+
+function codeSig(payload) {
+  const hex = crypto.createHmac('sha256', CODE_SECRET).update(payload).digest('hex');
+  // 10 hex = 40 بت → 8 محارف base36 (36^8 = 2.8e12 > 2^40)
+  return toB36(parseInt(hex.slice(0, 10), 16), 8);
+}
+
+/** توليد كود موقّع يحمل مدّته وعدد أجهزته */
+function makeSignedCode(durationHours, maxDevices) {
+  const expMs =
+    durationHours === 0 ? Date.UTC(9999, 11, 31) : Date.now() + durationHours * 3600 * 1000;
+  const exp36 = toB36(Math.floor(expMs / 1000), 8);
+  const dev36 = toB36(Math.max(0, Math.min(1295, (Number(maxDevices) || 1) - 1)), 2);
+  const rand = toB36(crypto.randomInt(0, 36 ** 3), 3);
+  const sig = codeSig(exp36 + dev36 + rand);
+  return `NACER-${exp36}-${dev36}-${rand}-${sig}`;
+}
+
+/** فكّ الكود والتحقق من توقيعه — بدون قاعدة بيانات */
+function parseSignedCode(code) {
+  const compact = String(code || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+  if (!compact.startsWith('NACER')) return null;
+  const rest = compact.slice(5);
+  if (rest.length !== 21) return null;
+  const exp36 = rest.slice(0, 8);
+  const dev36 = rest.slice(8, 10);
+  const rand = rest.slice(10, 13);
+  const sig = rest.slice(13, 21);
+  if (codeSig(exp36 + dev36 + rand) !== sig) return null;
+  const expSec = fromB36(exp36);
+  if (!Number.isFinite(expSec) || expSec <= 0) return null;
+  const maxDevices = fromB36(dev36) + 1;
+  return {
+    expMs: expSec * 1000,
+    maxDevices: Number.isFinite(maxDevices) ? maxDevices : 1,
+    forever: expSec * 1000 > Date.UTC(9000, 0, 1),
+  };
+}
 
 function fatal(msg) {
   console.error('\n❌ خطأ إعداد: ' + msg + '\n');
@@ -556,23 +648,70 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
   }
 
   // مطابقة متسامحة: بغض النظر عن حالة الأحرف، ومع تجاهل الفواصل إن لزم
-  const row = findCodeRow(code);
-  if (!row) {
+  // + التحقق الرياضي من توقيع الكود (يعمل حتى لو كانت قاعدة البيانات فارغة)
+  const signed = parseSignedCode(code);
+  let row = findCodeRow(code);
+
+  if (!row && signed) {
+    /* === إصلاح ذاتي: الكود صحيح رياضياً لكنه غير موجود في القاعدة ===
+     * يحدث بعد كل إعادة تشغيل على Render (القرص مؤقّت). نُعيد إدخال سجل
+     * الكود تلقائياً حتى تعمل لوحة التحكم وحصر الأجهزة من جديد. */
+    const hoursLeft = Math.max(0, Math.round((signed.expMs - Date.now()) / 3600000));
+    try {
+      db.prepare(
+        'INSERT OR IGNORE INTO codes (code, duration_hours, max_devices, note) VALUES (?, ?, ?, ?)'
+      ).run(
+        code.toUpperCase(),
+        signed.forever ? 0 : hoursLeft,
+        signed.maxDevices,
+        'auto (موقّع)'
+      );
+      row = findCodeRow(code);
+      console.log(`   ↻ استرجاع كود موقّع إلى القاعدة: ${code}`);
+    } catch (e) {
+      console.error('self-heal insert failed:', e.message);
+    }
+  }
+
+  if (!row && !signed) {
     recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'code_not_found' });
     return res.json({ valid: false, reason: 'code_not_found' });
   }
-  if (!row.is_active) {
+
+  /* === حالة احتياطية: كود موقّع صحيح لكن تعذّر إدخاله في القاعدة ===
+   * نقبله بدون تسجيل تفعيل (الأهم: أن يدخل المستخدم). */
+  if (!row && signed) {
+    const expIso = signed.forever
+      ? new Date('9999-12-31').toISOString()
+      : new Date(signed.expMs).toISOString();
+    const token = jwt.sign(
+      { role: 'user', code_id: 0, device_id: deviceId },
+      USER_JWT_SECRET,
+      { expiresIn: USER_TOKEN_TTL }
+    );
+    recordAttempt('verify', { code, deviceId, ip, ok: 1, reason: 'activated_stateless' });
+    res.locals.verifyOk = true;
+    return res.json({ valid: true, expires_at: expIso, plan: 'PRO', token });
+  }
+
+  if (row && !row.is_active) {
     recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'code_disabled' });
     return res.json({ valid: false, reason: 'code_disabled' });
   }
-  if (row.expires_at && new Date(row.expires_at) < new Date()) {
+  if (row && row.expires_at && new Date(row.expires_at) < new Date()) {
+    recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'code_expired' });
+    return res.json({ valid: false, reason: 'code_expired' });
+  }
+  // صلاحية الكود الموقّع هي المرجع (لا تعتمد على القاعدة)
+  if (signed && !signed.forever && signed.expMs < Date.now()) {
     recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'code_expired' });
     return res.json({ valid: false, reason: 'code_expired' });
   }
 
-  const act = db
-    .prepare('SELECT * FROM activations WHERE code_id = ? AND device_id = ?')
-    .get(row.id, deviceId);
+  const maxDevices = signed ? signed.maxDevices : row.max_devices;
+  const act = row
+    ? db.prepare('SELECT * FROM activations WHERE code_id = ? AND device_id = ?').get(row.id, deviceId)
+    : null;
 
   if (act) {
     if (act.revoked_at) {
@@ -631,7 +770,7 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
     .prepare('SELECT COUNT(*) AS c FROM activations WHERE code_id = ? AND revoked_at IS NULL')
     .get(row.id).c;
 
-  if (used >= row.max_devices) {
+  if (used >= maxDevices) {
     recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'max_devices_reached' });
     // سياسة (ج): نُخبر التطبيق أنه يستطيع تقديم طلب نقل بموافقة الأدمن
     const pending = db
@@ -648,8 +787,11 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
     });
   }
 
-  const expiresAt =
-    row.duration_hours === 0
+  const expiresAt = signed
+    ? signed.forever
+      ? new Date('9999-12-31').toISOString()
+      : new Date(signed.expMs).toISOString()
+    : row.duration_hours === 0
       ? new Date('9999-12-31').toISOString()
       : new Date(Date.now() + row.duration_hours * 3600 * 1000).toISOString();
 
@@ -958,15 +1100,9 @@ app.post('/api/admin/codes', adminLimiter, adminAuth, (req, res) => {
     for (let i = 0; i < count; i++) {
       let code;
       let tries = 0;
-      // ضمان عدم التكرار (UNIQUE) بدل الاعتماد على الحظ
+      // كود موقّع (يُتحقق منه رياضياً) + ضمان عدم التكرار في القاعدة
       do {
-        code =
-          'Nacer-' +
-          crypto.randomBytes(2).toString('hex').toUpperCase() +
-          '-' +
-          crypto.randomBytes(2).toString('hex').toUpperCase() +
-          '-' +
-          crypto.randomBytes(2).toString('hex').toUpperCase();
+        code = makeSignedCode(durationHours, maxDevices);
         tries++;
       } while (tries < 10 && db.prepare('SELECT 1 FROM codes WHERE code = ?').get(code));
       stmt.run(code, durationHours, maxDevices, note);
