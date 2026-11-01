@@ -157,6 +157,8 @@ function ensureColumn(table, column, definition) {
 ensureColumn('activations', 'device_label', 'TEXT');
 ensureColumn('activations', 'last_seen_at', 'TIMESTAMP');
 ensureColumn('activations', 'revoked_at', 'TIMESTAMP');
+ensureColumn('activations', 'pubkey', 'TEXT');           // مفتاح الجهاز العام (ECDSA P-256, SPKI base64)
+ensureColumn('activations', 'attested', 'INTEGER DEFAULT 0'); // هل تم ربط الجهاز بتوقيع تشفيري؟
 ensureColumn('codes', 'plan', "TEXT DEFAULT 'PRO'");
 
 /* ==========================================================================
@@ -365,6 +367,86 @@ app.post('/api/admin/login', loginLimiter, (req, res) => {
 });
 
 /* ==========================================================================
+ * 9.5) ربط الجهاز تشفيرياً — ECDSA P-256 + nonce
+ * --------------------------------------------------------------------------
+ *  الفكرة: التطبيق يولّد مفتاحاً داخل Android Keystore (غير قابل للتصدير).
+ *  عند كل تفعيل/نبضة يوقّع الرسالة:  code|device_id|nonce
+ *  السيرفر يتحقق من التوقيع بالمفتاح العام، ويربط المفتاح بالتفعيل.
+ *  بهذا لا يمكن نسخ ملف التفعيل إلى جهاز آخر — المفتاح الخاص لا يخرج من الشريحة.
+ * ========================================================================== */
+
+const NONCE_TTL = '120s';
+
+/** إصدار nonce موقّع قصير العمر */
+function issueNonce() {
+  return jwt.sign(
+    { typ: 'nonce', n: crypto.randomBytes(16).toString('hex') },
+    USER_JWT_SECRET,
+    { expiresIn: NONCE_TTL }
+  );
+}
+
+function verifyNonce(nonce) {
+  try {
+    const d = jwt.verify(nonce, USER_JWT_SECRET, { algorithms: ['HS256'] });
+    return d && d.typ === 'nonce' ? d : null;
+  } catch {
+    return null;
+  }
+}
+
+/** التحقق من توقيع الجهاز وإرجاع بصمة المفتاح */
+function verifyDeviceSignature({ pubkey, signature, code, deviceId, nonce }) {
+  if (!pubkey || !signature || !nonce) return { ok: false, error: 'missing_signature' };
+  if (!verifyNonce(nonce)) return { ok: false, error: 'bad_nonce' };
+
+  let key;
+  try {
+    key = crypto.createPublicKey({
+      key: Buffer.from(pubkey, 'base64'),
+      format: 'der',
+      type: 'spki',
+    });
+  } catch {
+    return { ok: false, error: 'bad_pubkey' };
+  }
+  if (key.asymmetricKeyType !== 'ec') return { ok: false, error: 'bad_pubkey' };
+
+  const msg = Buffer.from(`${code}|${deviceId}|${nonce}`, 'utf8');
+  const sig = Buffer.from(signature, 'base64');
+
+  let ok = false;
+  try {
+    ok = crypto.verify('sha256', msg, { key, dsaEncoding: 'der' }, sig);
+  } catch {
+    ok = false;
+  }
+  if (!ok) return { ok: false, error: 'bad_signature' };
+
+  const fingerprint = crypto
+    .createHash('sha256')
+    .update(key.export({ type: 'spki', format: 'der' }))
+    .digest('hex')
+    .slice(0, 32);
+
+  return { ok: true, fingerprint };
+}
+
+const nonceLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'too_many_requests' },
+});
+
+/* --- التطبيق يطلب nonce قبل التوقيع --- */
+app.get('/api/nonce', nonceLimiter, (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ nonce: issueNonce(), ttl: 120 });
+});
+
+/* ==========================================================================
  * 10) التحقق من الكود (يستدعيه التطبيق)
  * ========================================================================== */
 
@@ -385,6 +467,21 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
   if (!DEVICE_RE.test(deviceId)) {
     recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'invalid_device_id' });
     return res.json({ valid: false, reason: 'invalid_device_id' });
+  }
+
+  /* === ربط تشفيري (اختياري لكنه مُفعّل في التطبيق المحمي) === */
+  const pubkey = typeof body.pubkey === 'string' ? body.pubkey.trim() : '';
+  const signature = typeof body.signature === 'string' ? body.signature.trim() : '';
+  const nonce = typeof body.nonce === 'string' ? body.nonce.trim() : '';
+  let fingerprint = null;
+
+  if (pubkey || signature) {
+    const v = verifyDeviceSignature({ pubkey, signature, code, deviceId, nonce });
+    if (!v.ok) {
+      recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: v.error });
+      return res.status(400).json({ valid: false, reason: v.error });
+    }
+    fingerprint = v.fingerprint;
   }
 
   // COLLATE NOCASE: الأكواد مختلطة الأحرف (Nacer-a1B2-...) فلا نجبر حالة واحدة
@@ -414,6 +511,24 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
     if (new Date(act.expires_at) < new Date()) {
       recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'expired' });
       return res.json({ valid: false, reason: 'expired' });
+    }
+
+    /* === التحقق من مطابقة مفتاح الجهاز === */
+    if (act.pubkey) {
+      if (!fingerprint) {
+        recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'signature_required' });
+        return res.status(401).json({ valid: false, reason: 'signature_required' });
+      }
+      if (act.pubkey !== fingerprint) {
+        recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'device_key_mismatch' });
+        return res.status(403).json({ valid: false, reason: 'device_key_mismatch' });
+      }
+    } else if (fingerprint) {
+      // ترقية التفعيل القديم ليرتبط بالمفتاح
+      db.prepare('UPDATE activations SET pubkey = ?, attested = 1 WHERE id = ?').run(
+        fingerprint,
+        act.id
+      );
     }
 
     db.prepare('UPDATE activations SET last_seen_at = ? WHERE id = ?').run(
@@ -463,8 +578,15 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
       : new Date(Date.now() + row.duration_hours * 3600 * 1000).toISOString();
 
   db.prepare(
-    'INSERT INTO activations (code_id, device_id, expires_at, last_seen_at) VALUES (?, ?, ?, ?)'
-  ).run(row.id, deviceId, expiresAt, new Date().toISOString());
+    'INSERT INTO activations (code_id, device_id, expires_at, last_seen_at, pubkey, attested) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(
+    row.id,
+    deviceId,
+    expiresAt,
+    new Date().toISOString(),
+    fingerprint || null,
+    fingerprint ? 1 : 0
+  );
 
   const token = jwt.sign(
     { role: 'user', code_id: row.id, device_id: deviceId },
@@ -573,6 +695,72 @@ function requireUserToken(req, res) {
   }
   return decoded;
 }
+
+/* --- نبضة الجلسة: التحقق من أن التفعيل ما زال ساريًا على هذا الجهاز ---
+   يُستخدم من واجهة التفعيل (ui/index.html) كل دقيقتين، ومن التطبيق عند الإقلاع. */
+app.post('/api/session', subLimiter, (req, res) => {
+  const body = req.body || {};
+  const token = typeof body.token === 'string' ? body.token.trim() : '';
+  const deviceId = typeof body.device_id === 'string' ? body.device_id.trim() : '';
+
+  if (!token) return res.status(401).json({ valid: false, error: 'no_token' });
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, USER_JWT_SECRET, { algorithms: ['HS256'] });
+  } catch {
+    return res.status(401).json({ valid: false, error: 'invalid_or_expired_token' });
+  }
+  if (!decoded || decoded.role !== 'user') {
+    return res.status(403).json({ valid: false, error: 'forbidden' });
+  }
+
+  const codeId = Number(decoded.code_id);
+  const code = String(decoded.code || '');
+  const row = Number.isFinite(codeId) && codeId > 0
+    ? db.prepare('SELECT * FROM codes WHERE id = ?').get(codeId)
+    : db.prepare('SELECT * FROM codes WHERE code = ? COLLATE NOCASE').get(code);
+  if (!row) return res.status(401).json({ valid: false, reason: 'code_not_found' });
+  if (!row.is_active) return res.status(403).json({ valid: false, reason: 'code_disabled' });
+  if (row.expires_at && new Date(row.expires_at) < new Date()) {
+    return res.status(403).json({ valid: false, reason: 'expired' });
+  }
+
+  let act = null;
+  if (deviceId) {
+    act = db
+      .prepare('SELECT * FROM activations WHERE code_id = ? AND device_id = ? AND revoked_at IS NULL')
+      .get(row.id, deviceId);
+    if (!act) return res.status(403).json({ valid: false, reason: 'revoked' });
+    if (new Date(act.expires_at) < new Date()) {
+      return res.status(403).json({ valid: false, reason: 'expired' });
+    }
+
+    /* === إن كان التفعيل مربوطاً بمفتاح جهاز، فالتوقيع إلزامي === */
+    if (act.pubkey) {
+      const v = verifyDeviceSignature({
+        pubkey: typeof body.pubkey === 'string' ? body.pubkey.trim() : '',
+        signature: typeof body.signature === 'string' ? body.signature.trim() : '',
+        code: row.code,
+        deviceId,
+        nonce: typeof body.nonce === 'string' ? body.nonce.trim() : '',
+      });
+      if (!v.ok) {
+        return res.status(401).json({ valid: false, reason: v.error });
+      }
+      if (v.fingerprint !== act.pubkey) {
+        return res.status(403).json({ valid: false, reason: 'device_key_mismatch' });
+      }
+    }
+  }
+
+  return res.json({
+    valid: true,
+    plan: row.plan || 'PRO',
+    expires_at: (act && act.expires_at) || row.expires_at || null,
+    server_time: new Date().toISOString(),
+  });
+});
 
 /* --- المستخدم يطلب نقل مفتاحه إلى جهاز جديد --- */
 app.post('/api/transfer/request', subLimiter, (req, res) => {

@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node test/security.test.js && node test/transfer.test.js",
+    "test": "node test/security.test.js && node test/transfer.test.js && node test/crypto-binding.test.js",
     "test:old": "node test/prove_old_vuln.js"
   },
   "dependencies": {
