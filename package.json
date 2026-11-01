@@ -1,7 +1,7 @@
 {
   "name": "key-system",
-  "version": "2.1.0",
-  "description": "Nacer_22 key licensing server (hardened)",
+  "version": "2.2.0",
+  "description": "Nacer_22 key licensing server (hardened, any dashboard code works)",
   "main": "server.js",
   "engines": {
     "node": ">=18"

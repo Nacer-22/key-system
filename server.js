@@ -41,6 +41,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DB_PATH || 'keys.db';
 const SUB_LINK = process.env.SUB_LINK || 'https://t.me/HAX_NON_ROOT';
+const SERVER_VERSION = '2.2.0';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
@@ -52,6 +53,15 @@ const USER_JWT_SECRET = process.env.USER_JWT_SECRET || LEGACY_SECRET;
 
 const USER_TOKEN_TTL = process.env.USER_TOKEN_TTL || '12h';
 const ADMIN_TOKEN_TTL = process.env.ADMIN_TOKEN_TTL || '1h';
+
+/**
+ * ربط الجهاز تشفيرياً (ECDSA) صار **اختيارياً** وليس إجبارياً.
+ * السبب: التطبيق الحالي (Nacer_22) لا يوقّع الطلبات، فإذا كان أي تفعيل قديم
+ * قد رُبط بمفتاح جهاز، كان الخادم يرفض الكود الصحيح بـ signature_required.
+ * القيمة الافتراضية false = أي كود صحيح يعمل من أي نسخة من التطبيق.
+ * يمكن تشغيل الإجبار لاحقاً بمتغيّر البيئة REQUIRE_SIGNATURE=true.
+ */
+const REQUIRE_SIGNATURE = String(process.env.REQUIRE_SIGNATURE || 'false').toLowerCase() === 'true';
 
 function fatal(msg) {
   console.error('\n❌ خطأ إعداد: ' + msg + '\n');
@@ -203,6 +213,41 @@ function recordAttempt(kind, { code = null, deviceId = null, ip = null, ok = 0, 
 const CODE_RE = /^[A-Za-z0-9_-]{4,64}$/;
 const DEVICE_RE = /^[A-Za-z0-9._:-]{8,128}$/;
 
+/**
+ * تطبيع الكود القادم من التطبيق/اللوحة:
+ *  - يزيل المسافات البادئة/اللاحقة
+ *  - يزيل المحارف غير المرئية (zero-width / BOM / NBSP) التي تنتقل مع النسخ واللصق
+ *  - يزيل أي مسافة داخلية (مثال: "Nacer-1234 - ABCD" من نسخ خاطئ)
+ * هذا يضمن أن أي كود يُنشأ من اللوحة يُطابق مهما كانت طريقة نسخه في التطبيق.
+ */
+function normCode(value) {
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/[\u200B-\u200D\u2060\uFEFF\u00A0]/g, '')
+    .replace(/\s+/g, '')
+    .trim();
+}
+
+/**
+ * البحث عن كود بطريقة متسامحة:
+ *  1) مطابقة مباشرة بغض النظر عن حالة الأحرف (COLLATE NOCASE)
+ *  2) إن لم يوجد: مطابقة بعد تجاهل الفواصل (- و _) — حتى يعمل الكود لو نسخه
+ *     المستخدم بدون شرطات، مثل NACER900E1FEAEF90 بدل Nacer-900E-1FEA-EF90.
+ * نفس الكود يُعيد نفس السجل، فلا خطر أمني — مجرد تسامح في الإدخال.
+ */
+const findCodeExact = db.prepare('SELECT * FROM codes WHERE code = ? COLLATE NOCASE');
+const findCodeCompact = db.prepare(
+  "SELECT * FROM codes WHERE REPLACE(REPLACE(code, '-', ''), '_', '') = ? COLLATE NOCASE"
+);
+function findCodeRow(code) {
+  if (!code) return null;
+  const row = findCodeExact.get(code);
+  if (row) return row;
+  const compact = code.replace(/[-_]/g, '');
+  if (compact.length < 4) return null;
+  return findCodeCompact.get(compact) || null;
+}
+
 /* ==========================================================================
  * 4) الوسائط العامة
  * ========================================================================== */
@@ -283,7 +328,12 @@ app.use(
 app.get('/api/health', (req, res) => {
   try {
     db.prepare('SELECT 1').get();
-    res.json({ ok: true, uptime: Math.floor(process.uptime()) });
+    res.json({
+      ok: true,
+      uptime: Math.floor(process.uptime()),
+      version: SERVER_VERSION,
+      require_signature: REQUIRE_SIGNATURE,
+    });
   } catch {
     res.status(503).json({ ok: false });
   }
@@ -307,9 +357,25 @@ const loginLimiter = rateLimit({
   ...jsonLimit({ error: 'too_many_attempts', message: 'محاولات كثيرة، حاول بعد 15 دقيقة' }),
 });
 
+/**
+ * 🔴 الإصلاح الحرج #4 — «الخادم مشغول حالياً» بعد إدخال كود صحيح.
+ * --------------------------------------------------------------------------
+ * السبب: كان هذا المحدِّد يحسب **كل** طلب تحقق — بما فيها الطلبات الناجحة —
+ * داخل نافذة 15 دقيقة. التطبيق يتحقق عند كل فتح، وبعد 15–30 فتحاً (أو عدة
+ * أجهزة خلف نفس IP للمشغّل) كان الخادم يرد 429 فيرى المستخدم «الخادم مشغول».
+ *
+ * الحل:
+ *   1) skipSuccessfulRequests = true  → التفعيلات الناجحة لا تُستهلك من الحصة أبداً.
+ *   2) requestWasSuccessful مخصّصة → تُعتبر ناجحة فقط عندما نضع res.locals.verifyOk = true
+ *      (أي valid:true فعلياً)، وليس أي رد HTTP 200 مثل {valid:false}.
+ *   3) رفع السقف إلى 300 محاولة فاشلة/15 دقيقة لكل IP — حماية من التخمين
+ *      دون معاقبة المستخدمين الشرعيين (شبكات الجوال تشترك في IP واحد).
+ */
 const verifyLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30,
+  max: 300,
+  skipSuccessfulRequests: true,
+  requestWasSuccessful: (req, res) => Boolean(res.locals && res.locals.verifyOk === true),
   ...jsonLimit({ valid: false, reason: 'too_many_requests' }),
 });
 
@@ -456,7 +522,8 @@ app.get('/api/nonce', nonceLimiter, (req, res) => {
 
 app.post('/api/verify', verifyLimiter, (req, res) => {
   const body = req.body || {};
-  const code = typeof body.code === 'string' ? body.code.trim() : '';
+  // تطبيع الكود: يزيل المسافات والمحارف غير المرئية حتى لا يفشل كود صحيح من اللوحة
+  const code = normCode(body.code);
   const deviceId = typeof body.device_id === 'string' ? body.device_id.trim() : '';
   const ip = clientIp(req);
 
@@ -488,8 +555,8 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
     fingerprint = v.fingerprint;
   }
 
-  // COLLATE NOCASE: الأكواد مختلطة الأحرف (Nacer-a1B2-...) فلا نجبر حالة واحدة
-  const row = db.prepare('SELECT * FROM codes WHERE code = ? COLLATE NOCASE').get(code);
+  // مطابقة متسامحة: بغض النظر عن حالة الأحرف، ومع تجاهل الفواصل إن لزم
+  const row = findCodeRow(code);
   if (!row) {
     recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'code_not_found' });
     return res.json({ valid: false, reason: 'code_not_found' });
@@ -520,10 +587,14 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
     /* === التحقق من مطابقة مفتاح الجهاز === */
     if (act.pubkey) {
       if (!fingerprint) {
-        recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'signature_required' });
-        return res.status(401).json({ valid: false, reason: 'signature_required' });
-      }
-      if (act.pubkey !== fingerprint) {
+        // التطبيق لا يوقّع (أو نسخة قديمة). لا نمنع الكود الصحيح:
+        // نسمح بالمرور فقط إذا كان الإجبار مُعطّلاً (الافتراضي).
+        if (REQUIRE_SIGNATURE) {
+          recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'signature_required' });
+          return res.status(401).json({ valid: false, reason: 'signature_required' });
+        }
+        // لا نُسجّل فشلاً هنا: الكود صحيح، والمتابعة تتم أدناه كتفعيل مُعاد استخدامه.
+      } else if (act.pubkey !== fingerprint) {
         recordAttempt('verify', { code, deviceId, ip, ok: 0, reason: 'device_key_mismatch' });
         return res.status(403).json({ valid: false, reason: 'device_key_mismatch' });
       }
@@ -546,6 +617,7 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
       { expiresIn: USER_TOKEN_TTL }
     );
     recordAttempt('verify', { code, deviceId, ip, ok: 1, reason: 'reused' });
+    res.locals.verifyOk = true; // لا تُحسب هذه المحاولة الناجحة في حدّ المعدّل
     return res.json({
       valid: true,
       expires_at: act.expires_at,
@@ -599,6 +671,7 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
   );
 
   recordAttempt('verify', { code, deviceId, ip, ok: 1, reason: 'activated' });
+  res.locals.verifyOk = true; // لا تُحسب هذه المحاولة الناجحة في حدّ المعدّل
   res.json({ valid: true, expires_at: expiresAt, plan: row.plan || 'PRO', token });
 });
 
@@ -723,7 +796,7 @@ app.post('/api/session', subLimiter, (req, res) => {
   const code = String(decoded.code || '');
   const row = Number.isFinite(codeId) && codeId > 0
     ? db.prepare('SELECT * FROM codes WHERE id = ?').get(codeId)
-    : db.prepare('SELECT * FROM codes WHERE code = ? COLLATE NOCASE').get(code);
+    : findCodeRow(code);
   if (!row) return res.status(401).json({ valid: false, reason: 'code_not_found' });
   if (!row.is_active) return res.status(403).json({ valid: false, reason: 'code_disabled' });
   if (row.expires_at && new Date(row.expires_at) < new Date()) {
@@ -769,7 +842,7 @@ app.post('/api/session', subLimiter, (req, res) => {
 /* --- المستخدم يطلب نقل مفتاحه إلى جهاز جديد --- */
 app.post('/api/transfer/request', subLimiter, (req, res) => {
   const body = req.body || {};
-  const code = typeof body.code === 'string' ? body.code.trim() : '';
+  const code = normCode(body.code);
   const toDeviceId = typeof body.device_id === 'string' ? body.device_id.trim() : '';
   const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 300) : '';
   const ip = clientIp(req);
@@ -783,7 +856,7 @@ app.post('/api/transfer/request', subLimiter, (req, res) => {
     return res.status(400).json({ error: 'invalid_format' });
   }
 
-  const row = db.prepare('SELECT * FROM codes WHERE code = ? COLLATE NOCASE').get(code);
+  const row = findCodeRow(code);
   if (!row) {
     recordAttempt('transfer_request', { code, deviceId: toDeviceId, ip, ok: 0, reason: 'code_not_found' });
     return res.status(404).json({ error: 'code_not_found' });
@@ -831,11 +904,11 @@ app.post('/api/transfer/request', subLimiter, (req, res) => {
 
 /* --- المستخدم يتابع حالة طلبه --- */
 app.get('/api/transfer/status', subLimiter, (req, res) => {
-  const code = typeof req.query.code === 'string' ? req.query.code.trim() : '';
+  const code = normCode(req.query.code);
   const deviceId = typeof req.query.device_id === 'string' ? req.query.device_id.trim() : '';
   if (!code || !deviceId) return res.status(400).json({ error: 'missing_params' });
 
-  const row = db.prepare('SELECT id FROM codes WHERE code = ? COLLATE NOCASE').get(code);
+  const row = findCodeRow(code);
   if (!row) return res.status(404).json({ error: 'code_not_found' });
 
   const tr = db
