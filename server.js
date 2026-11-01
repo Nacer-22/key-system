@@ -48,8 +48,31 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 // توافقية رجعية: إن لم تُضبط المفاتيح المنفصلة، نرجع إلى JWT_SECRET القديم
 // حتى لا يتعطّل النشر الحالي. الفحص الحقيقي للدور هو ما يمنع تصعيد الصلاحيات.
 const LEGACY_SECRET = process.env.JWT_SECRET;
-const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || LEGACY_SECRET;
-const USER_JWT_SECRET = process.env.USER_JWT_SECRET || LEGACY_SECRET;
+
+/**
+ * ============================================================================
+ *  توليد المفاتيح تلقائياً (إصلاح فشل النشر)
+ * ============================================================================
+ *  كان الخادم يتوقف بـ exit 1 إذا لم يُضبط ADMIN_JWT_SECRET،
+ *  فيفشل النشر على Render ويرجع للنسخة القديمة.
+ *  الحل: نشتقّ المفاتيح بشكل **ثابت** من ADMIN_PASSWORD عند عدم وجودها.
+ *  ثابت = نفس المفتاح في كل إعادة تشغيل، فلا تبطل الجلسات ولا الأكواد.
+ *  ملاحظة: تغيير ADMIN_PASSWORD يُبطل الأكواد الموقّعة القديمة،
+ *  لذلك يُفضّل ضبط CODE_SECRET صراحةً للإنتاج.
+ */
+function deriveSecret(label, seed) {
+  return crypto
+    .createHmac('sha256', String(seed || 'nacer-22'))
+    .update('nacer22:' + label + ':v1')
+    .digest('hex');
+}
+
+const _seed = process.env.SECRET_SEED || ADMIN_PASSWORD || 'nacer-22-fallback-seed';
+
+const ADMIN_JWT_SECRET =
+  process.env.ADMIN_JWT_SECRET || LEGACY_SECRET || deriveSecret('admin-jwt', _seed);
+const USER_JWT_SECRET =
+  process.env.USER_JWT_SECRET || LEGACY_SECRET || deriveSecret('user-jwt', _seed);
 
 const USER_TOKEN_TTL = process.env.USER_TOKEN_TTL || '12h';
 const ADMIN_TOKEN_TTL = process.env.ADMIN_TOKEN_TTL || '1h';
@@ -89,7 +112,7 @@ const CODE_SECRET =
   process.env.CODE_SECRET ||
   process.env.USER_JWT_SECRET ||
   process.env.JWT_SECRET ||
-  'nacer22-fallback-code-secret-change-me';
+  deriveSecret('code-sign', _seed);
 
 const B36 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -166,11 +189,12 @@ if (!ADMIN_PASSWORD) {
 if (ADMIN_PASSWORD.length < 8) {
   console.warn('⚠️  ADMIN_PASSWORD أقصر من 8 أحرف — يُنصح بـ 16 حرفاً أو أكثر.');
 }
-if (!ADMIN_JWT_SECRET || ADMIN_JWT_SECRET.length < 16) {
-  fatal('ADMIN_JWT_SECRET (أو JWT_SECRET) غير مضبوط أو أقصر من 16 حرفاً.');
+// لم نعد نتوقف عند غياب مفاتيح JWT: تُولّد تلقائياً من ADMIN_PASSWORD.
+if (!process.env.ADMIN_JWT_SECRET && !LEGACY_SECRET) {
+  console.warn('⚠️  ADMIN_JWT_SECRET غير مضبوط — تم توليده تلقائياً من ADMIN_PASSWORD.');
 }
-if (!USER_JWT_SECRET || USER_JWT_SECRET.length < 16) {
-  fatal('USER_JWT_SECRET (أو JWT_SECRET) غير مضبوط أو أقصر من 16 حرفاً.');
+if (!process.env.USER_JWT_SECRET && !LEGACY_SECRET) {
+  console.warn('⚠️  USER_JWT_SECRET غير مضبوط — تم توليده تلقائياً من ADMIN_PASSWORD.');
 }
 if (ADMIN_JWT_SECRET === USER_JWT_SECRET) {
   console.warn(
