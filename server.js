@@ -64,10 +64,33 @@ function adminAuth(req, res, next) {
 
 app.post('/api/verify', verifyLimiter, (req, res) => {
     const { code, device_id } = req.body;
-    if (!code || !device_id) return res.json({ valid: false, reason: "missing_params" });
 
-    const row = db.prepare("SELECT * FROM codes WHERE code = ?").get(code);
-    if (!row) return res.json({ valid: false, reason: "code_not_found" });
+    // Canonicalize keys exactly as the login page does. This also tolerates
+    // pasted spaces, different letter casing, and missing/different hyphens.
+    const normalizedCode = String(code || '')
+        .normalize('NFKC')
+        .replace(/[\\u200B-\\u200D\\uFEFF]/g, '')
+        .replace(/[^A-Za-z0-9]/g, '')
+        .toUpperCase();
+
+    if (!normalizedCode || !device_id) {
+        return res.json({ valid: false, reason: "missing_params" });
+    }
+    if (!/^NACER[A-F0-9]{12}$/.test(normalizedCode)) {
+        return res.json({ valid: false, reason: "invalid_format" });
+    }
+
+    // Match normalized stored values without changing existing records.
+    const row = db.prepare(
+        "SELECT * FROM codes WHERE UPPER(REPLACE(TRIM(code), '-', '')) = ?"
+    ).get(normalizedCode);
+    if (!row) {
+        console.warn("[verify] code_not_found", {
+            keySuffix: normalizedCode.slice(-4),
+            database: db.name
+        });
+        return res.json({ valid: false, reason: "code_not_found" });
+    }
     if (!row.is_active) return res.json({ valid: false, reason: "code_disabled" });
     if (row.expires_at && new Date(row.expires_at) < new Date())
         return res.json({ valid: false, reason: "code_expired" });
