@@ -69,7 +69,7 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
     // pasted spaces, different letter casing, and missing/different hyphens.
     const normalizedCode = String(code || '')
         .normalize('NFKC')
-        .replace(/[\\u200B-\\u200D\\uFEFF]/g, '')
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
         .replace(/[^A-Za-z0-9]/g, '')
         .toUpperCase();
 
