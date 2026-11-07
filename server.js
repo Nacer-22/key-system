@@ -59,7 +59,7 @@ function norm(code) {
 app.post('/api/check', verifyLimiter, (req, res) => {
     const code = norm(req.body.code);
     if (!code) return res.json({ valid: false, reason: "missing_params" });
-    if (!/^NACER[A-F0-9]{12}$/.test(code)) return res.json({ valid: false, reason: "invalid_format" });
+    if (!/^NACER[A-F0-9]{12,16}$/.test(code)) return res.json({ valid: false, reason: "invalid_format" });
     const db = loadDb();
     const row = db.codes.find(c => norm(c.code) === code);
     if (!row) return res.json({ valid: false, reason: "code_not_found" });
@@ -72,7 +72,7 @@ app.post('/api/verify', verifyLimiter, (req, res) => {
     const code = norm(req.body.code);
     const device_id = String(req.body.device_id || '').trim();
     if (!code || !device_id) return res.json({ valid: false, reason: "missing_params" });
-    if (!/^NACER[A-F0-9]{12}$/.test(code)) return res.json({ valid: false, reason: "invalid_format" });
+    if (!/^NACER[A-F0-9]{12,16}$/.test(code)) return res.json({ valid: false, reason: "invalid_format" });
     const db = loadDb();
     const row = db.codes.find(c => norm(c.code) === code);
     if (!row) return res.json({ valid: false, reason: "code_not_found" });
