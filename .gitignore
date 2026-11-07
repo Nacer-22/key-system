@@ -1,0 +1,3 @@
+node_modules/
+keys.db.json
+*.log
