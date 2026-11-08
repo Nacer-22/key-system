@@ -65,7 +65,7 @@ app.post('/api/check', verifyLimiter, (req, res) => {
     if (!row) return res.json({ valid: false, reason: "code_not_found" });
     if (!row.is_active) return res.json({ valid: false, reason: "code_disabled" });
     if (row.expires_at && new Date(row.expires_at) < new Date()) return res.json({ valid: false, reason: "code_expired" });
-    res.json({ valid: true, expires_at: row.expires_at, max_devices: row.max_devices, code: row.code });
+    res.json({ valid: true, expires_at: row.expires_at || new Date('9999-12-31').toISOString(), max_devices: row.max_devices, code: row.code });
 });
 
 app.post('/api/verify', verifyLimiter, (req, res) => {
